@@ -5,6 +5,7 @@ vgcore.*
 luall
 .env
 log.txt
+monitor
 
 # python
 **/__pycache__

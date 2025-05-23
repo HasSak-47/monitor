@@ -1,10 +1,12 @@
 #ifndef __SYSTEM_HPP__
-#define __SYSTEM_HPP__ #include<unistd.h>
-#include <stdint.h>
+#define __SYSTEM_HPP__
 
 #include <cstdint>
+
 #include <string>
 #include <vector>
+
+#include <unistd.h>
 
 namespace Sys {
 

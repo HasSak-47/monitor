@@ -1,11 +1,13 @@
-// c/c++ stuff
-#include <algorithm>
+// c stuff
 #include <cctype>
 #include <cstdio>
 #include <cstring>
+
+// c++ stuff
+#include <algorithm>
 #include <fstream>
 #include <iostream>
-#include <ostream>
+#include <map>
 #include <stdexcept>
 #include <string>
 
@@ -57,26 +59,30 @@ bool Process::update() {
             this->_stat.name += buf;
     }
 
-    stat_file >> this->_stat.state >> this->_stat.parent_pid >>
-        this->_stat.group_id;
+    stat_file >> this->_stat.state >>
+        this->_stat.parent_pid >> this->_stat.group_id;
 
-    statm_file >> this->_statm.size >> this->_statm.resident >>
-        this->_statm.shared >> this->_statm.text >> this->_statm.lib >>
+    statm_file >> this->_statm.size >>
+        this->_statm.resident >> this->_statm.shared >>
+        this->_statm.text >> this->_statm.lib >>
         this->_statm.data >> this->_statm.dt;
 
     return true;
 }
 
 Process::Process(char* pid) {
-    this->_stat_path  = std::string("/proc/") + pid + "/stat";
-    this->_statm_path = std::string("/proc/") + pid + "/statm";
+    this->_stat_path =
+        std::string("/proc/") + pid + "/stat";
+    this->_statm_path =
+        std::string("/proc/") + pid + "/statm";
     this->update();
 }
 
-std::istream& operator>>(std::istream& is, ProcStat::Cpu& cpu) {
-    is >> cpu.name >> cpu.user >> cpu.nice >> cpu.system >> cpu.idle >>
-        cpu.iowait >> cpu.irq >> cpu.softirq >> cpu.steal >> cpu.guest >>
-        cpu.guest_nice;
+std::istream& operator>>(
+    std::istream& is, ProcStat::Cpu& cpu) {
+    is >> cpu.name >> cpu.user >> cpu.nice >> cpu.system >>
+        cpu.idle >> cpu.iowait >> cpu.irq >> cpu.softirq >>
+        cpu.steal >> cpu.guest >> cpu.guest_nice;
     return is;
 }
 
@@ -91,11 +97,15 @@ std::vector<ProcStat::Cpu>& ProcStat::get_cpus() {
 std::vector<ProcStat::Cpu> ProcStat::get_cpus_diff() {
     std::vector<ProcStat::Cpu> dif(this->_curr_cpu.size());
     for (size_t i = 0; i < _curr_cpu.size(); ++i) {
-        dif[i].name   = this->_prev_cpu[i].name;
-        dif[i].user   = this->_prev_cpu[i].user - this->_curr_cpu[i].user;
-        dif[i].nice   = this->_prev_cpu[i].nice - this->_curr_cpu[i].nice;
-        dif[i].system = this->_prev_cpu[i].system - this->_curr_cpu[i].system;
-        dif[i].idle   = this->_prev_cpu[i].idle - this->_curr_cpu[i].idle;
+        dif[i].name = this->_prev_cpu[i].name;
+        dif[i].user = this->_prev_cpu[i].user -
+                      this->_curr_cpu[i].user;
+        dif[i].nice = this->_prev_cpu[i].nice -
+                      this->_curr_cpu[i].nice;
+        dif[i].system = this->_prev_cpu[i].system -
+                        this->_curr_cpu[i].system;
+        dif[i].idle = this->_prev_cpu[i].idle -
+                      this->_curr_cpu[i].idle;
     }
 
     return this->_curr_cpu;
@@ -126,8 +136,7 @@ void ProcStat::update() {
 }
 
 std::vector<Process>& System::get_processes() {
-    DIR* dir     = opendir("/proc");
-    size_t tries = 1;
+    DIR* dir = opendir("/proc");
     while (dir == nullptr) dir = opendir("/proc");
     if (dir == nullptr)
         throw std::runtime_error("could not open /proc!?");
@@ -140,7 +149,8 @@ std::vector<Process>& System::get_processes() {
             continue;
 
         int pid   = std::stoi(dirent->d_name);
-        auto proc = std::find_if(this->_process.begin(), this->_process.end(),
+        auto proc = std::find_if(this->_process.begin(),
+            this->_process.end(),
             [&](Process& x) { return x._stat.pid == pid; });
 
         if (proc != this->_process.end()) {
@@ -149,15 +159,13 @@ std::vector<Process>& System::get_processes() {
                 this->_process.erase(proc);
         }
         else
-            this->_process.push_back(Process(dirent->d_name));
+            this->_process.push_back(
+                Process(dirent->d_name));
     }
     closedir(dir);
 
     return this->_process;
 }
-
-#include <iostream>
-#include <map>
 
 void System::update() {
     // lmaooo should have not implemented it like this
