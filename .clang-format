@@ -1,4 +1,13 @@
+BasedOnStyle: LLVM
+# Indent stuff
 IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+AccessModifierOffset: -4
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
+
 AlignArrayOfStructures: Right
 AlignConsecutiveAssignments:
   Enabled: true
@@ -9,23 +18,23 @@ AlignConsecutiveAssignments:
 AlignConsecutiveShortCaseStatements:
   Enabled: true
   AcrossEmptyLines: true
-  AcrossComments: true
+  AcrossComments: false
   AlignCaseColons: false
 
 PointerAlignment: Left
-ColumnLimit: 80
+ColumnLimit: 60
 
 BreakBeforeBraces: Custom
 BraceWrapping:
   BeforeElse: true
   AfterStruct: false
   AfterControlStatement: false
-  SplitEmptyFunction: false # Keep `{}`
+  SplitEmptyFunction: false
   SplitEmptyRecord: false
   SplitEmptyNamespace: false
 
 AlignAfterOpenBracket: DontAlign
-AllowShortFunctionsOnASingleLine: Inline # Helps keep static one-liners like yours tight
+AllowShortFunctionsOnASingleLine: Inline
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: true
 
