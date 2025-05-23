@@ -1,0 +1,15 @@
+build
+units
+plugins
+vgcore.*
+luall
+.env
+log.txt
+
+# python
+**/__pycache__
+
+# rust
+/target
+
+.ignore/
