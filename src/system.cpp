@@ -135,7 +135,7 @@ void ProcStat::update() {
     }
 }
 
-std::vector<Process>& System::get_processes() {
+const std::vector<Process>& System::get_processes() {
     DIR* dir = opendir("/proc");
     while (dir == nullptr) dir = opendir("/proc");
     if (dir == nullptr)

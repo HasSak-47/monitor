@@ -17,10 +17,10 @@ class Process {
 public:
     struct _proc_stat {
         pid_t pid;
-        std::string name;
-        char state;
         pid_t parent_pid;
         pid_t group_id;
+        char state;
+        std::string name;
     };
     struct _proc_statm {
         size_t size;
@@ -40,6 +40,7 @@ public:
     bool update();
     bool func();
 
+    /** total ram usage */
     uint64_t total() const {
         return 4096ULL * (this->_statm.resident);
     }
@@ -92,7 +93,7 @@ public:
     uint64_t _cached_mem;
     uint64_t _buffer_mem;
 
-    std::vector<Process>& get_processes();
+    const std::vector<Process>& get_processes();
     System();
 
     void update();

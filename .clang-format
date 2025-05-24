@@ -53,3 +53,5 @@ SpacesBeforeTrailingComments: 1
 
 # Don't break string literals
 BreakStringLiterals: false
+
+BreakTemplateDeclarations: true
