@@ -21,7 +21,7 @@ struct Unit {
 class Buffer {
 private:
     std::vector<std::vector<std::shared_ptr<Unit>>> _data;
-    size_t w, h;
+    size_t _w, _h;
 
 public:
     Buffer(size_t w, size_t h);
