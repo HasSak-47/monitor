@@ -2,3 +2,4 @@
 include/
 -llua
 -Wall
+-std=c++23

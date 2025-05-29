@@ -1,9 +1,15 @@
+#include <chrono>
+#include <cstdio>
+#include <cstdlib>
 #include <lua.hpp>
 
-#include <stdlib.h>
-#include <termios.h>
 #include <thread>
+
+#include <termios.h>
 #include <unistd.h>
+
+#include <render/buffer.hpp>
+#include "render/window.hpp"
 
 lua_State* L = nullptr;
 
@@ -26,7 +32,7 @@ void set_raw_mode() {
     struct termios raw = orig_termios;
     raw.c_lflag &= ~(ECHO | ICANON | ISIG | IEXTEN);
     raw.c_cc[VMIN]  = 0;
-    raw.c_cc[VTIME] = 1;
+    raw.c_cc[VTIME] = 0;
 
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
 }
@@ -39,13 +45,53 @@ int main() {
     luaL_requiref(L, "package", luaopen_package, true);
     luaL_requiref(L, "string", luaopen_string, true);
 
-    set_raw_mode();
     using namespace std::chrono;
+    using namespace ly;
 
-    std::this_thread::sleep_for(1s);
+    printf("\e[?1049h"); // enter alternate screen
+    printf("\e[0;0H");   // move cursor to 0
+    printf("\e[?25l");   // hide cursor
+    fflush(stdout);
+    set_raw_mode();
 
-    unset_raw_mode();
+    constexpr auto frame_duration = 16ms;
+    render::Window win;
+    auto writer = win.get_subbuf(0, 0, 4, 1);
+
+    float fps = 0;
+
+    size_t frame = 0;
+    int c        = 0;
+    while (true) {
+        printf("\e[0;0H");
+        auto t_start = high_resolution_clock::now();
+
+        ssize_t n = read(STDIN_FILENO, &c, 1);
+        if (n > 0 && c == 'q')
+            break;
+
+        writer.render_widget(fps);
+        win.render();
+
+        auto t_now = high_resolution_clock::now();
+        auto delta = t_now - t_start;
+
+        if (delta < frame_duration)
+            std::this_thread::sleep_for(
+                frame_duration - delta);
+
+        // Optional: print elapsed time for debugging
+        auto t_end = high_resolution_clock::now();
+        auto total_elapsed =
+            duration_cast<milliseconds>(t_end - t_start);
+        fps = 1000.0 / total_elapsed.count();
+        frame++;
+    }
 
     lua_close(L);
+    unset_raw_mode();
+    printf("\e[?1049l"); // leave alternate screen
+    printf("\e[?25h");   // show cursor
+    fflush(stdout);
     return 0;
 }
