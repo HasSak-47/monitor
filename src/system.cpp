@@ -178,7 +178,7 @@ void System::update() {
     }
 
     for (const auto& pid : pids) {
-        this->_process.insert(pid, Sys::Process(pid));
+        this->_process[pid] = Sys::Process(pid);
     }
 
     this->stat.update();

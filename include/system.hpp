@@ -39,6 +39,7 @@ public:
     bool _functional = false;
 
     Process(char* pid);
+    Process(int pid);
 
     bool update();
     bool func();
