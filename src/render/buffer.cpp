@@ -24,15 +24,10 @@ using EmptyIniter = std::function<SharedUnit()>;
 std::vector<std::vector<SharedUnit>> init_buffer(
     size_t w, size_t h, DataIniter initer) {
 
-    std::vector<std::vector<SharedUnit>> buf = {};
-
-    buf.resize(w);
+    std::vector<std::vector<SharedUnit>> buf(w);
     for (size_t i = 0; i < w; ++i) {
-        std::vector<std::shared_ptr<Unit>> col = {};
         for (size_t j = 0; j < h; ++j)
-            col.push_back(initer(i, j));
-
-        buf[i] = col;
+            buf[i].push_back(initer(i, j));
     }
 
     return buf;
@@ -43,7 +38,8 @@ std::vector<std::vector<SharedUnit>> init_buffer(
     std::vector<std::vector<SharedUnit>> buf = {};
     buf.resize(w);
     for (size_t i = 0; i < w; ++i) {
-        std::vector<std::shared_ptr<Unit>> col = {};
+        std::vector<SharedUnit> col = {};
+
         for (size_t j = 0; j < h; ++j)
             col.push_back(initer());
 
@@ -85,6 +81,11 @@ Buffer Buffer::get_sub_buffer(
 }
 
 Unit& Buffer::get(size_t x, size_t y) {
+    if (this->width() <= x)
+        x = this->width() - 1;
+    if (this->height() <= y)
+        y = this->height() - 1;
+
     return *this->_data[x][y];
 }
 

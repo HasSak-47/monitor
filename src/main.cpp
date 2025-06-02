@@ -1,15 +1,20 @@
+#include <algorithm>
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <lua.hpp>
 
+#include <memory>
 #include <thread>
 
 #include <termios.h>
 #include <unistd.h>
 
 #include <render/buffer.hpp>
+#include "render/system_rend.hpp"
+#include "render/widgets.hpp"
 #include "render/window.hpp"
+#include "system.hpp"
 
 lua_State* L = nullptr;
 
@@ -54,28 +59,53 @@ int main() {
     fflush(stdout);
     set_raw_mode();
 
-    constexpr auto frame_duration = 16ms;
+    constexpr auto frame_duration = 16.6666ms;
     render::Window win;
-    auto writer = win.get_subbuf(0, 0, 4, 1);
+    auto box_buffer = win.get_subbuf(0, 0, 30, 3);
 
-    float fps = 0;
-
+    float fps    = 0;
+    int offset   = 0;
     size_t frame = 0;
-    int c        = 0;
+
+    render::widgets::Box debug_box(Sys::sys._max_mem);
+
+    int c = 0;
     while (true) {
-        printf("\e[0;0H");
         auto t_start = high_resolution_clock::now();
+        printf("\e[0;0H");
+
+        auto processes = Sys::sys.get_processes();
 
         ssize_t n = read(STDIN_FILENO, &c, 1);
-        if (n > 0 && c == 'q')
-            break;
+        if (n > 0) {
+            if (c == 'q')
+                break;
+            switch (c) {
+            case 'j':
+                offset = std::min(
+                    offset + 1, (int)processes.size());
+                break;
+            case 'k':
+                offset = std::max(
+                    (int64_t)offset - 1, (int64_t)0);
+                break;
+            }
+        }
 
-        writer.render_widget(fps);
+        auto p = Sys::sys.get_processes();
+        std::sort(p.begin(), p.end(), [](auto a, auto b) {
+            return a.total() > b.total();
+        });
+        win.get_subbuf(0, 3, win.width(), win.height() - 3)
+            .render_widget(render::Process(p, offset));
+        box_buffer.render_widget(debug_box);
         win.render();
 
+        // frame rate calc
         auto t_now = high_resolution_clock::now();
         auto delta = t_now - t_start;
 
+        // wait for end of frame
         if (delta < frame_duration)
             std::this_thread::sleep_for(
                 frame_duration - delta);

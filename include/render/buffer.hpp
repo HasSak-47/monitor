@@ -24,28 +24,24 @@ struct Color {
 };
 
 struct Unit {
-    int chr = 0;
+    char32_t chr = ' ';
     Color<u8> col;
     Unit();
 };
 
 class Buffer;
-
-template <typename T>
-void render(Buffer& buf, T widget);
+void render(Buffer& buf);
 
 template <typename T>
 concept OstreamFormattable =
-    requires(std::ostream& os, T widget) {
+    requires(std::ostream& os, const T& widget) {
         { os << widget } -> std::same_as<std::ostream&>;
     };
 
 template <typename T>
 concept Renderable =
-    requires(ly::render::Buffer& buf, T widget) {
-        {
-            render(buf, widget)
-        } -> std::same_as<std::ostream&>;
+    requires(ly::render::Buffer& buf, const T& widget) {
+        { render(buf, widget) } -> std::same_as<void>;
     };
 
 class Buffer {
@@ -74,7 +70,8 @@ public:
     const size_t width() const;
     const size_t height() const;
 
-    template <Renderable T>
+    template <typename T>
+        requires Renderable<T>
     void render_widget(const T& widget) {
         render(*this, widget);
     }

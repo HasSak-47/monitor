@@ -178,11 +178,11 @@ void System::update() {
     size_t len;
     while (file >> name >> len >> type) map[name] = len;
 
-    this->_max_mem    = map["MemTotal:"];
-    this->_free_mem   = map["MemFree:"];
-    this->_av_mem     = map["MemAvailable:"];
-    this->_cached_mem = map["Cached:"];
-    this->_buffer_mem = map["Buffers:"];
+    this->_max_mem    = 1000 * map["MemTotal:"];
+    this->_free_mem   = 1000 * map["MemFree:"];
+    this->_av_mem     = 1000 * map["MemAvailable:"];
+    this->_cached_mem = 1000 * map["Cached:"];
+    this->_buffer_mem = 1000 * map["Buffers:"];
 }
 
 System::System() {

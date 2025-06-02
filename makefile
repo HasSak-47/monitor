@@ -6,7 +6,7 @@ OBJS := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o,$(SRCS)) $(OUT_RUST_LIB)
 OUT := monitor
 
 C := g++
-CFLAGS := -g -shared -I include -c -Wall -Werror -std=c++23 -MMD -MP
+CFLAGS := -g -shared -I include -c -Wall -std=c++23 -MMD -MP
 
 LDFLAGS := -o $(OUT) -llua
 

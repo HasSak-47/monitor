@@ -42,7 +42,8 @@ public:
 
     /** total ram usage */
     uint64_t total() const {
-        return 4096ULL * (this->_statm.resident);
+        long page_size = sysconf(_SC_PAGESIZE);
+        return page_size * this->_statm.resident;
     }
 
     friend class System;

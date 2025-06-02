@@ -1,3 +1,4 @@
+#include <bits/types/wint_t.h>
 #include <cstdio>
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -11,11 +12,17 @@ static Buffer _back_gen() {
     struct winsize w;
     ioctl(STDIN_FILENO, TIOCGWINSZ, &w);
 
-    Buffer buf(w.ws_row, w.ws_col);
+    Buffer buf(w.ws_col, w.ws_row);
     return buf;
 }
 
-Window::Window() : _back(_back_gen()) {}
+Window::Window() : _back(_back_gen()) {
+    struct winsize w;
+    ioctl(STDIN_FILENO, TIOCGWINSZ, &w);
+
+    this->_width  = w.ws_col;
+    this->_height = w.ws_row;
+}
 Window::~Window() {}
 
 void Window::render() {
@@ -29,9 +36,12 @@ void Window::render() {
                     last.b);
             }
 
-            putchar(cur.chr);
+            printf("%lc", cur.chr);
+            cur.chr = ' ';
+            cur.col = {0xff, 0xff, 0xff};
         }
     }
+    printf("\e[38;2;%d;%d;%dm", 255, 255, 255);
 }
 
 Buffer Window::get_subbuf(
