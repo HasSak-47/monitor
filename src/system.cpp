@@ -78,6 +78,14 @@ Process::Process(char* pid) {
     this->update();
 }
 
+Process::Process(int pid) {
+    this->_stat_path = std::string("/proc/") +
+                       std::to_string(pid) + "/stat";
+    this->_statm_path = std::string("/proc/") +
+                        std::to_string(pid) + "/statm";
+    this->update();
+}
+
 std::istream& operator>>(
     std::istream& is, ProcStat::Cpu& cpu) {
     is >> cpu.name >> cpu.user >> cpu.nice >> cpu.system >>
@@ -135,7 +143,11 @@ void ProcStat::update() {
     }
 }
 
-const std::vector<Process>& System::get_processes() {
+const System::Processes& System::get_processes() const {
+    return this->_process;
+}
+
+void System::update() {
     DIR* dir = opendir("/proc");
     while (dir == nullptr) dir = opendir("/proc");
     if (dir == nullptr)
@@ -143,33 +155,32 @@ const std::vector<Process>& System::get_processes() {
 
     struct dirent* dirent = nullptr;
 
-    this->_process.clear();
+    std::vector<int> pids = {};
     while ((dirent = readdir(dir))) {
         if (!is_process(dirent))
             continue;
 
-        int pid   = std::stoi(dirent->d_name);
-        auto proc = std::find_if(this->_process.begin(),
-            this->_process.end(),
-            [&](Process& x) { return x._stat.pid == pid; });
-
-        if (proc != this->_process.end()) {
-            bool alive = proc->update();
-            if (!alive)
-                this->_process.erase(proc);
-        }
-        else
-            this->_process.push_back(
-                Process(dirent->d_name));
+        int pid = std::stoi(dirent->d_name);
+        pids.push_back(pid);
     }
     closedir(dir);
 
-    return this->_process;
-}
+    for (auto& entry : this->_process) {
+        auto pos = std::find(
+            pids.begin(), pids.end(), entry.first);
 
-void System::update() {
-    // lmaooo should have not implemented it like this
-    this->get_processes();
+        if (pos != pids.end()) {
+            entry.second.update();
+            pids.erase(pos);
+        }
+        else
+            this->_process.erase(entry.first);
+    }
+
+    for (const auto& pid : pids) {
+        this->_process.insert(pid, Sys::Process(pid));
+    }
+
     this->stat.update();
 
     std::ifstream file("/proc/meminfo");

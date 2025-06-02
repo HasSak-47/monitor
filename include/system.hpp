@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <unistd.h>
@@ -36,7 +37,9 @@ public:
     std::string _stat_path;
     std::string _statm_path;
     bool _functional = false;
+
     Process(char* pid);
+
     bool update();
     bool func();
 
@@ -81,8 +84,11 @@ public:
 };
 
 class System {
+public:
+    using Processes = std::unordered_map<size_t, Process>;
+
 private:
-    std::vector<Process> _process;
+    Processes _process;
 
 public:
     ProcStat stat;
@@ -94,7 +100,7 @@ public:
     uint64_t _cached_mem;
     uint64_t _buffer_mem;
 
-    const std::vector<Process>& get_processes();
+    const Processes& get_processes() const;
     System();
 
     void update();
