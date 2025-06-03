@@ -68,18 +68,21 @@ void Bar::render(Buffer& buf) const {
 }
 
 void MultiBar::render(Buffer& buf) const {
-    buf.get(0, 0).chr               = '[';
-    buf.get(0, buf.width() - 1).chr = ']';
+    size_t end = buf.width() - 1;
 
-    size_t len = (buf.width() - 2);
+    buf.get(0, 0).chr   = '[';
+    buf.get(end, 0).chr = ']';
+
+    size_t len = (end - 1);
 
     std::vector<size_t> w(this->_val.size());
     size_t last = 1;
-    for (const float& val : this->_val) {
-        size_t w = len * val;
-        for (size_t i = 0; i < w; ++i)
-            buf.get(last + i, 0).chr = '|';
-
-        last = w - 1;
+    for (size_t j = 0; j < this->_val.size(); ++j) {
+        size_t w = len * this->_val[j];
+        for (size_t i = 0; i < w; ++i) {
+            buf.get(i + last, 0).chr = '|';
+            buf.get(i + last, 0).col = this->_cols[j];
+        }
+        last += w;
     }
 }

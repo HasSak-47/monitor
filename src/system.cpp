@@ -1,6 +1,7 @@
 // c stuff
 #include <cctype>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 
 // c++ stuff
@@ -41,7 +42,14 @@ bool Process::func() {
     return this->_functional;
 }
 
+bool Process::is_kernel() const {
+    return this->_stat.parent_pid <= 2;
+}
+
 bool Process::update() {
+    if (this->_statm_path == "") {
+        return false;
+    }
     std::ifstream stat_file(this->_stat_path);
     std::ifstream statm_file(this->_statm_path);
 
@@ -69,21 +77,53 @@ bool Process::update() {
 
     return true;
 }
+Process::Process() {}
 
-Process::Process(char* pid) {
-    this->_stat_path =
-        std::string("/proc/") + pid + "/stat";
-    this->_statm_path =
-        std::string("/proc/") + pid + "/statm";
-    this->update();
-}
+Process::Process(char* pid)
+    : Process(static_cast<pid_t>(std::stoi(pid))) {}
 
-Process::Process(int pid) {
+Process::Process(pid_t pid) {
     this->_stat_path = std::string("/proc/") +
                        std::to_string(pid) + "/stat";
     this->_statm_path = std::string("/proc/") +
                         std::to_string(pid) + "/statm";
     this->update();
+}
+
+Process::Process(const Process& other) {
+    this->_pid        = other._pid;
+    this->_stat_path  = other._stat_path;
+    this->_statm_path = other._statm_path;
+
+    this->update();
+}
+
+Process::Process(Process&& other) {
+    this->_pid        = other._pid;
+    this->_stat_path  = std::move(other._stat_path);
+    this->_statm_path = std::move(other._statm_path);
+
+    this->update();
+}
+
+Process& Process::operator=(const Process& other) {
+    this->_pid        = other._pid;
+    this->_stat_path  = other._stat_path;
+    this->_statm_path = other._statm_path;
+
+    this->update();
+
+    return *this;
+}
+
+Process& Process::operator=(Process&& other) {
+    this->_pid        = other._pid;
+    this->_stat_path  = std::move(other._stat_path);
+    this->_statm_path = std::move(other._statm_path);
+
+    this->update();
+
+    return *this;
 }
 
 std::istream& operator>>(
@@ -143,7 +183,7 @@ void ProcStat::update() {
     }
 }
 
-const System::Processes& System::get_processes() const {
+const Processes& System::get_processes() const {
     return this->_process;
 }
 
@@ -170,7 +210,9 @@ void System::update() {
             pids.begin(), pids.end(), entry.first);
 
         if (pos != pids.end()) {
-            entry.second.update();
+            bool ok = entry.second.update();
+            if (!ok)
+                this->_process.erase(entry.first);
             pids.erase(pos);
         }
         else

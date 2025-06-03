@@ -4,17 +4,16 @@
 #include <cstdlib>
 #include <lua.hpp>
 
-#include <memory>
 #include <thread>
 
 #include <termios.h>
 #include <unistd.h>
 
 #include <render/buffer.hpp>
-#include "render/system_rend.hpp"
-#include "render/widgets.hpp"
-#include "render/window.hpp"
-#include "system.hpp"
+#include <render/system_rend.hpp>
+#include <render/widgets.hpp>
+#include <render/window.hpp>
+#include <system.hpp>
 
 lua_State* L = nullptr;
 
@@ -66,11 +65,23 @@ int main() {
     float fps    = 0;
     int offset   = 0;
     size_t frame = 0;
+    bool debug   = false;
 
     render::widgets::Box debug_box(Sys::sys._max_mem);
+    // used = ;
+    // buffered = ;
+    // cached   = ;
+
+    std::vector<float> mem(3);
 
     int c = 0;
     while (true) {
+        float max = Sys::sys._max_mem;
+        mem[0]    = (Sys::sys._max_mem - Sys::sys._av_mem) /
+                 max;                        // used
+        mem[1] = Sys::sys._buffer_mem / max; // buffered
+        mem[2] = Sys::sys._cached_mem / max; // cached
+
         auto t_start = high_resolution_clock::now();
         printf("\e[0;0H");
 
@@ -93,11 +104,8 @@ int main() {
         }
 
         auto p = Sys::sys.get_processes();
-        std::sort(p.begin(), p.end(), [](auto a, auto b) {
-            return a.total() > b.total();
-        });
-        win.get_subbuf(0, 3, win.width(), win.height() - 3)
-            .render_widget(render::Process(p, offset));
+        win.get_subbuf(0, 5, win.width(), 1)
+            .render_widget(render::sys::Memory(mem));
         box_buffer.render_widget(debug_box);
         win.render();
 

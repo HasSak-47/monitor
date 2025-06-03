@@ -23,6 +23,14 @@ struct Color {
     T r = {}, g = {}, b = {};
 };
 
+extern const Color<u8> WHITE_U8;
+extern const Color<u8> RED_U8;
+extern const Color<u8> YELLOW_U8;
+extern const Color<u8> GREEN_U8;
+extern const Color<u8> PURPLE_U8;
+extern const Color<u8> CYAN_U8;
+extern const Color<u8> BLUE_U8;
+
 struct Unit {
     char32_t chr = ' ';
     Color<u8> col;

@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include <string>
+#include <sys/types.h>
 #include <unordered_map>
 #include <vector>
 
@@ -34,14 +35,23 @@ public:
     };
     _proc_stat _stat;
     _proc_statm _statm;
+    pid_t _pid;
     std::string _stat_path;
     std::string _statm_path;
     bool _functional = false;
 
+    Process();
     Process(char* pid);
-    Process(int pid);
+    Process(pid_t pid);
+
+    Process(const Process& other);
+    Process(Process&& other);
+
+    Process& operator=(const Process& other);
+    Process& operator=(Process&& other);
 
     bool update();
+    bool is_kernel() const;
     bool func();
 
     /** total ram usage */
@@ -84,10 +94,9 @@ public:
     friend class System;
 };
 
-class System {
-public:
-    using Processes = std::unordered_map<size_t, Process>;
+using Processes = std::unordered_map<size_t, Process>;
 
+class System {
 private:
     Processes _process;
 

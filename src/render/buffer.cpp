@@ -1,11 +1,53 @@
 #include <functional>
 #include <memory>
 #include <ostream>
-#include <sstream>
 #include <utility>
 #include <vector>
 
 #include <render/buffer.hpp>
+
+namespace ly::render {
+const Color<ly::u8> BLACK_U8 = {
+    0x00,
+    0x00,
+    0x00,
+};
+const Color<ly::u8> RED_U8 = {
+    0xff,
+    0x00,
+    0x00,
+};
+const Color<ly::u8> GREEN_U8 = {
+    0x00,
+    0xff,
+    0x00,
+};
+const Color<ly::u8> YELLOW_U8 = {
+    0xff,
+    0xff,
+    0x00,
+};
+const Color<ly::u8> BLUE_U8 = {
+    0x00,
+    0x00,
+    0xff,
+};
+const Color<ly::u8> PURPLE_U8 = {
+    0xff,
+    0x00,
+    0xff,
+};
+const Color<ly::u8> CYAN_U8 = {
+    0xff,
+    0x00,
+    0xff,
+};
+const Color<ly::u8> WHITE_U8 = {
+    0xff,
+    0xff,
+    0xff,
+};
+} // namespace ly::render
 
 using namespace ly::render;
 
@@ -17,9 +59,6 @@ using DataIniter =
     std::function<SharedUnit(size_t x, size_t y)>;
 
 using EmptyIniter = std::function<SharedUnit()>;
-
-// typedef SharedUnit (*DataIniter)(size_t x, size_t y);
-// typedef SharedUnit (*EmptyIniter)();
 
 std::vector<std::vector<SharedUnit>> init_buffer(
     size_t w, size_t h, DataIniter initer) {

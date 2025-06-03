@@ -1,7 +1,6 @@
 #ifndef __RENDER_WIDGETS_HPP__
 #define __RENDER_WIDGETS_HPP__
 
-#include <memory>
 #include "render/buffer.hpp"
 
 namespace ly::render::widgets {
@@ -59,8 +58,8 @@ public:
 
 class Bar : public Widget {
 private:
-    float& _val;
-    bool _show;
+    const float& _val;
+    const bool _show;
 
 public:
     Bar(float& val, bool show = false)
@@ -72,10 +71,14 @@ public:
 
 class MultiBar : public Widget {
 private:
-    std::vector<float>& _val;
+    const std::vector<float>& _val;
+    const std::vector<Color<u8>>& _cols;
 
 public:
-    MultiBar(std::vector<float>& val) : _val(val) {}
+    MultiBar(const std::vector<float>& val,
+        const std::vector<Color<u8>>& cols)
+        : _val(val), _cols(cols) {}
+
     ~MultiBar() {}
 
     void render(Buffer& buf) const override;
