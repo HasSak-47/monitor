@@ -1,6 +1,7 @@
 #ifndef __RENDER_WIDGETS_HPP__
 #define __RENDER_WIDGETS_HPP__
 
+#include <vector>
 #include "render/buffer.hpp"
 
 namespace ly::render::widgets {
@@ -60,10 +61,11 @@ public:
 class Text : public Widget {
 private:
     const std::string& _text;
-    const Color<u8> _col;
+    const ConsoleColor _col;
 
 public:
-    Text(const std::string& text, Color<u8> col = WHITE_U8)
+    Text(const std::string& text,
+        ConsoleColor col = ConsoleColor::WHITE)
         : _text(text), _col(col) {}
     ~Text() {}
 
@@ -86,14 +88,29 @@ public:
 class MultiBar : public Widget {
 private:
     const std::vector<float>& _val;
-    const std::vector<Color<u8>>& _cols;
+    const std::vector<ConsoleColor>& _cols;
+    const bool _show;
 
 public:
     MultiBar(const std::vector<float>& val,
-        const std::vector<Color<u8>>& cols)
-        : _val(val), _cols(cols) {}
+        const std::vector<ConsoleColor>& cols,
+        bool show = false)
+        : _val(val), _cols(cols), _show(show) {}
 
     ~MultiBar() {}
+
+    void render(Buffer& buf) const override;
+};
+
+class Table : public Widget {
+private:
+    const std::vector<std::string> _headers = {};
+
+public:
+    Table(std::vector<std::string> headers)
+        : _headers(headers) {}
+
+    ~Table() {}
 
     void render(Buffer& buf) const override;
 };

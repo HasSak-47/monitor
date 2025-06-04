@@ -2,7 +2,6 @@
 #include <iomanip>
 #include <render/widgets.hpp>
 #include <sstream>
-#include <stdexcept>
 
 using namespace ly::render;
 using namespace ly::render::widgets;
@@ -76,7 +75,35 @@ void Bar::render(Buffer& buf) const {
 }
 
 void MultiBar::render(Buffer& buf) const {
-    size_t end = buf.width() - 1;
+    size_t end = buf.width();
+
+    if (this->_show && buf.width() > 7) {
+        constexpr size_t sub_width = 10;
+        size_t x = buf.width() - sub_width;
+
+        auto sub  = buf.get_sub_buffer(x, 0, sub_width, 1);
+        float val = 0.;
+        for (const auto& v : this->_val) {
+            val += v;
+        }
+
+        // Format the percentage string
+        std::ostringstream ss_raw;
+        ss_raw << std::fixed << std::setprecision(1)
+               << val * 100 << '%';
+        std::string str = ss_raw.str();
+
+        // Truncate from the left if string is too long
+        if (str.length() > sub_width)
+            str = str.substr(str.length() - sub_width);
+
+        // Right-align the string
+        std::ostringstream ss;
+        ss << std::setw(sub_width) << str;
+
+        sub.render_widget(ss.str());
+        end -= sub_width;
+    }
 
     buf.get(0, 0).chr   = '[';
     buf.get(end, 0).chr = ']';

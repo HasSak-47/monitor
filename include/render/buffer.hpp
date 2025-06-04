@@ -23,17 +23,48 @@ struct Color {
     T r = {}, g = {}, b = {};
 };
 
-extern const Color<u8> WHITE_U8;
-extern const Color<u8> RED_U8;
-extern const Color<u8> YELLOW_U8;
-extern const Color<u8> GREEN_U8;
-extern const Color<u8> PURPLE_U8;
-extern const Color<u8> CYAN_U8;
-extern const Color<u8> BLUE_U8;
+struct ConsoleColor {
+private:
+    enum { Bit, TrueColor } _ty;
+    union _ColorUnion {
+        enum class _BitCol : int32_t {
+            BLACK  = 0b000,
+            RED    = 0b001,
+            GREEN  = 0b010,
+            YELLOW = 0b011,
+            BLUE   = 0b100,
+            PURPLE = 0b101,
+            CYAN   = 0b110,
+            WHITE  = 0b111,
+        } bit_col;
+        Color<u8> true_col;
+
+        _ColorUnion(_BitCol col) { this->bit_col = col; }
+        _ColorUnion(Color<u8> col) { this->true_col = col; }
+    } dt;
+
+    ConsoleColor(ConsoleColor::_ColorUnion::_BitCol col)
+        : _ty(Bit), dt(col) {};
+
+public:
+    ConsoleColor(Color<u8> col)
+        : _ty(TrueColor), dt(col) {};
+
+    bool operator==(const ConsoleColor& other) const;
+    void display();
+
+    static const ConsoleColor WHITE;
+    static const ConsoleColor RED;
+    static const ConsoleColor YELLOW;
+    static const ConsoleColor GREEN;
+    static const ConsoleColor PURPLE;
+    static const ConsoleColor CYAN;
+    static const ConsoleColor BLUE;
+};
 
 struct Unit {
     char32_t chr = ' ';
-    Color<u8> col;
+    ConsoleColor col;
     Unit();
 };
 
@@ -102,7 +133,7 @@ public:
             }
 
             this->get(i, j).chr = c;
-            this->get(i, j).col = {0xff, 0xff, 0xff};
+            this->get(i, j).col = ConsoleColor::WHITE;
             idx++;
         }
     }

@@ -38,45 +38,6 @@ System sys = {};
 
 using namespace Sys;
 
-bool Process::func() {
-    return this->_functional;
-}
-
-bool Process::is_kernel() const {
-    return this->_stat.parent_pid <= 2;
-}
-
-bool Process::update() {
-    if (this->_statm_path == "") {
-        return false;
-    }
-    std::ifstream stat_file(this->_stat_path);
-    std::ifstream statm_file(this->_statm_path);
-
-    if (!stat_file.is_open() || !statm_file.is_open())
-        return false;
-
-    stat_file >> this->_stat.pid;
-    // i lov u c++ never change
-    this->_stat.name = "";
-    while (!stat_file.eof() && !stat_file.bad()) {
-        char buf = stat_file.get();
-        if (buf == ')')
-            break;
-        if (buf != '(')
-            this->_stat.name += buf;
-    }
-
-    stat_file >> this->_stat.state >>
-        this->_stat.parent_pid >> this->_stat.group_id;
-
-    statm_file >> this->_statm.size >>
-        this->_statm.resident >> this->_statm.shared >>
-        this->_statm.text >> this->_statm.lib >>
-        this->_statm.data >> this->_statm.dt;
-
-    return true;
-}
 Process::Process() {}
 
 Process::Process(char* pid)
@@ -124,6 +85,46 @@ Process& Process::operator=(Process&& other) {
     this->update();
 
     return *this;
+}
+
+bool Process::func() {
+    return this->_functional;
+}
+
+bool Process::is_kernel() const {
+    return this->_stat.parent_pid <= 2;
+}
+
+bool Process::update() {
+    if (this->_statm_path == "") {
+        return false;
+    }
+    std::ifstream stat_file(this->_stat_path);
+    std::ifstream statm_file(this->_statm_path);
+
+    if (!stat_file.is_open() || !statm_file.is_open())
+        return false;
+
+    stat_file >> this->_stat.pid;
+    // i lov u c++ never change
+    this->_stat.name = "";
+    while (!stat_file.eof() && !stat_file.bad()) {
+        char buf = stat_file.get();
+        if (buf == ')')
+            break;
+        if (buf != '(')
+            this->_stat.name += buf;
+    }
+
+    stat_file >> this->_stat.state >>
+        this->_stat.parent_pid >> this->_stat.group_id;
+
+    statm_file >> this->_statm.size >>
+        this->_statm.resident >> this->_statm.shared >>
+        this->_statm.text >> this->_statm.lib >>
+        this->_statm.data >> this->_statm.dt;
+
+    return true;
 }
 
 std::istream& operator>>(

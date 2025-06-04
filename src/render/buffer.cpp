@@ -7,51 +7,49 @@
 #include <render/buffer.hpp>
 
 namespace ly::render {
-const Color<ly::u8> BLACK_U8 = {
-    0x00,
-    0x00,
-    0x00,
-};
-const Color<ly::u8> RED_U8 = {
-    0xff,
-    0x00,
-    0x00,
-};
-const Color<ly::u8> GREEN_U8 = {
-    0x00,
-    0xff,
-    0x00,
-};
-const Color<ly::u8> YELLOW_U8 = {
-    0xff,
-    0xff,
-    0x00,
-};
-const Color<ly::u8> BLUE_U8 = {
-    0x00,
-    0x00,
-    0xff,
-};
-const Color<ly::u8> PURPLE_U8 = {
-    0xff,
-    0x00,
-    0xff,
-};
-const Color<ly::u8> CYAN_U8 = {
-    0xff,
-    0x00,
-    0xff,
-};
-const Color<ly::u8> WHITE_U8 = {
-    0xff,
-    0xff,
-    0xff,
-};
+const ConsoleColor ConsoleColor::WHITE =
+    ConsoleColor(ConsoleColor::_ColorUnion::_BitCol::WHITE);
+const ConsoleColor ConsoleColor::RED =
+    ConsoleColor(ConsoleColor::_ColorUnion::_BitCol::RED);
+const ConsoleColor ConsoleColor::YELLOW = ConsoleColor(
+    ConsoleColor::_ColorUnion::_BitCol::YELLOW);
+const ConsoleColor ConsoleColor::GREEN =
+    ConsoleColor(ConsoleColor::_ColorUnion::_BitCol::GREEN);
+const ConsoleColor ConsoleColor::PURPLE = ConsoleColor(
+    ConsoleColor::_ColorUnion::_BitCol::PURPLE);
+const ConsoleColor ConsoleColor::CYAN =
+    ConsoleColor(ConsoleColor::_ColorUnion::_BitCol::CYAN);
+const ConsoleColor ConsoleColor::BLUE =
+    ConsoleColor(ConsoleColor::_ColorUnion::_BitCol::BLUE);
 } // namespace ly::render
 
 using namespace ly::render;
 
-Unit::Unit() : col({0xff, 0xff, 0xff}) {}
+bool ConsoleColor::operator==(
+    const ConsoleColor& other) const {
+    if (this->_ty != other._ty) {
+        return false;
+    }
+
+    if (this->_ty == ConsoleColor::Bit) {
+        return this->dt.bit_col == other.dt.bit_col;
+    }
+    return this->dt.true_col == other.dt.true_col;
+}
+
+void ConsoleColor::display() {
+    switch (this->_ty) {
+    case Bit:
+        printf("\e[3%dm", (int)this->dt.bit_col);
+        break;
+    case TrueColor:
+        printf("\e[38;2;%d;%d;%dm", this->dt.true_col.r,
+            this->dt.true_col.g, this->dt.true_col.b);
+        break;
+    }
+}
+
+Unit::Unit() : col(ConsoleColor::WHITE) {}
 
 using SharedUnit = std::shared_ptr<Unit>;
 

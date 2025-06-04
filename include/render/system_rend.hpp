@@ -16,10 +16,12 @@ class Memory : public widgets::Widget {
 private:
     std::vector<float> _pers;
     // used buffer cached
-    const std::vector<Color<u8>> _cols = {
+    const std::vector<ConsoleColor> _cols = {
         {
-         GREEN_U8, BLUE_U8,
-         YELLOW_U8, },
+         ConsoleColor::GREEN,
+         ConsoleColor::BLUE,
+         ConsoleColor::YELLOW,
+         },
     };
 
 public:
@@ -39,8 +41,12 @@ public:
     }
 
     void render(Buffer& buf) const override {
-        buf.render_widget(
-            widgets::MultiBar(this->_pers, this->_cols));
+        buf.get_sub_buffer(0, 0, 4, 1)
+            .render_widget("Mem:");
+
+        buf.get_sub_buffer(4, 0, buf.width() - 4, 1)
+            .render_widget(widgets::MultiBar(
+                this->_pers, this->_cols, true));
     }
 };
 
@@ -54,11 +60,16 @@ public:
     void render(Buffer& buffer) const override {
         buffer.get_sub_buffer(0, 0, 6, 1)
             .render_widget(this->_proc._stat.pid);
-        buffer.get_sub_buffer(6, 0, 15, 1)
-            .render_widget(widgets::Text(
-                this->_proc._stat.name, GREEN_U8));
+        buffer.get_sub_buffer(6, 0, 16, 1)
+            .render_widget(
+                widgets::Text(this->_proc._stat.name,
+                    ConsoleColor::GREEN));
         // TODO: add here proc cmd ig
-        // size_t w = buffer.width() - 21;
+        size_t w = buffer.width() - 22;
+        buffer.get_sub_buffer(22, 0, w, 1)
+            .render_widget(
+                widgets::Text(this->_proc._stat.name,
+                    ConsoleColor::GREEN));
     }
 };
 

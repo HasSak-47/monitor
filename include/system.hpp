@@ -38,6 +38,7 @@ public:
     pid_t _pid;
     std::string _stat_path;
     std::string _statm_path;
+    std::string _cmd_line;
     bool _functional = false;
 
     Process();

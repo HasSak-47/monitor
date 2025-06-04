@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <chrono>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <lua.hpp>
@@ -41,7 +42,8 @@ void set_raw_mode() {
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+
     L = luaL_newstate();
     luaL_requiref(L, "base", luaopen_base, true);
     luaL_requiref(L, "math", luaopen_math, true);
@@ -60,7 +62,6 @@ int main() {
 
     constexpr auto frame_duration = 16.6666ms;
     render::Window win;
-    bool debug = false;
 
     render::sys::Memory mem;
     render::sys::Processes procs(0);
