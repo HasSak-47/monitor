@@ -8,6 +8,7 @@ namespace ly::render::widgets {
 class Widget {
 public:
     virtual ~Widget() {};
+    virtual void update() {};
     virtual void render(Buffer& buffer) const = 0;
 };
 
@@ -54,6 +55,19 @@ public:
             1, 1, buf.width() - 2, buf.height() - 2);
         sub.render_widget(this->_capture);
     }
+};
+
+class Text : public Widget {
+private:
+    const std::string& _text;
+    const Color<u8> _col;
+
+public:
+    Text(const std::string& text, Color<u8> col = WHITE_U8)
+        : _text(text), _col(col) {}
+    ~Text() {}
+
+    void render(Buffer& buf) const override;
 };
 
 class Bar : public Widget {

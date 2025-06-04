@@ -30,6 +30,14 @@ void Block::render(Buffer& buf) const {
     buf.get(w, h).chr = '+';
 }
 
+void Text::render(Buffer& buf) const {
+    size_t max = std::min(buf.width(), this->_text.size());
+    for (size_t i = 0; i < max; ++i) {
+        buf.get(i, 0).chr = this->_text[i];
+        buf.get(i, 0).col = this->_col;
+    }
+}
+
 void Bar::render(Buffer& buf) const {
     size_t end = buf.width();
     if (this->_show && buf.width() > 7) {

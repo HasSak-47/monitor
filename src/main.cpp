@@ -60,53 +60,56 @@ int main() {
 
     constexpr auto frame_duration = 16.6666ms;
     render::Window win;
-    auto box_buffer = win.get_subbuf(0, 0, 30, 3);
+    bool debug = false;
 
-    float fps    = 0;
-    int offset   = 0;
-    size_t frame = 0;
-    bool debug   = false;
+    render::sys::Memory mem;
+    render::sys::Processes procs(0);
 
-    render::widgets::Box debug_box(Sys::sys._max_mem);
-    // used = ;
-    // buffered = ;
-    // cached   = ;
-
-    std::vector<float> mem(3);
-
+    render::widgets::Box debug_box(procs.get_offset());
     int c = 0;
     while (true) {
-        float max = Sys::sys._max_mem;
-        mem[0]    = (Sys::sys._max_mem - Sys::sys._av_mem) /
-                 max;                        // used
-        mem[1] = Sys::sys._buffer_mem / max; // buffered
-        mem[2] = Sys::sys._cached_mem / max; // cached
-
         auto t_start = high_resolution_clock::now();
-        printf("\e[0;0H");
+        printf("\e[0;0H"); // return cursor to 0,0
 
-        auto processes = Sys::sys.get_processes();
-
+        // input processing
         ssize_t n = read(STDIN_FILENO, &c, 1);
         if (n > 0) {
             if (c == 'q')
                 break;
             switch (c) {
             case 'j':
-                offset = std::min(
-                    offset + 1, (int)processes.size());
+                procs.inc_offset();
                 break;
             case 'k':
-                offset = std::max(
-                    (int64_t)offset - 1, (int64_t)0);
+                procs.dec_offset();
+                break;
+            case 'm':
+                procs.sort =
+                    render::sys::Processes::Sort::Mem;
+                break;
+            case 'p':
+                procs.sort =
+                    render::sys::Processes::Sort::Pid;
+                break;
+            case 'n':
+                procs.sort =
+                    render::sys::Processes::Sort::Name;
+                break;
+            case 'g':
+                procs.goto_beg();
+                break;
+            case 'G':
+                procs.goto_end();
                 break;
             }
         }
 
-        auto p = Sys::sys.get_processes();
-        win.get_subbuf(0, 5, win.width(), 1)
-            .render_widget(render::sys::Memory(mem));
-        box_buffer.render_widget(debug_box);
+        mem.update();
+
+        win.get_subbuf(0, 0, win.width(), 1)
+            .render_widget(mem);
+        win.get_subbuf(0, 1, win.width(), win.height() - 1)
+            .render_widget(procs);
         win.render();
 
         // frame rate calc
@@ -122,8 +125,8 @@ int main() {
         auto t_end = high_resolution_clock::now();
         auto total_elapsed =
             duration_cast<milliseconds>(t_end - t_start);
-        fps = 1000.0 / total_elapsed.count();
-        frame++;
+        // fps = 1000.0 / total_elapsed.count();
+        // frame++;
     }
 
     lua_close(L);
