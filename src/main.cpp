@@ -1,6 +1,4 @@
-#include <algorithm>
 #include <chrono>
-#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <lua.hpp>
@@ -43,6 +41,7 @@ void set_raw_mode() {
 }
 
 int main(int argc, char* argv[]) {
+    printf("main\n");
 
     L = luaL_newstate();
     luaL_requiref(L, "base", luaopen_base, true);

@@ -3,11 +3,12 @@
 
 #include <cstdint>
 
+#include <fstream>
 #include <string>
-#include <sys/types.h>
 #include <unordered_map>
 #include <vector>
 
+#include <sys/types.h>
 #include <unistd.h>
 
 namespace Sys {
@@ -33,22 +34,24 @@ public:
         size_t data;
         size_t dt;
     };
+
     _proc_stat _stat;
     _proc_statm _statm;
+
     pid_t _pid;
-    std::string _stat_path;
-    std::string _statm_path;
-    std::string _cmd_line;
+    std::ifstream _stat_file;
+    std::ifstream _statm_file;
+    std::ifstream _cmd_line;
     bool _functional = false;
 
     Process();
     Process(char* pid);
     Process(pid_t pid);
 
-    Process(const Process& other);
+    Process(const Process& other) = delete;
     Process(Process&& other);
 
-    Process& operator=(const Process& other);
+    Process& operator=(const Process& other) = delete;
     Process& operator=(Process&& other);
 
     bool update();

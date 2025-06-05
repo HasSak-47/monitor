@@ -44,43 +44,28 @@ Process::Process(char* pid)
     : Process(static_cast<pid_t>(std::stoi(pid))) {}
 
 Process::Process(pid_t pid) {
-    this->_stat_path = std::string("/proc/") +
-                       std::to_string(pid) + "/stat";
-    this->_statm_path = std::string("/proc/") +
-                        std::to_string(pid) + "/statm";
-    this->update();
-}
-
-Process::Process(const Process& other) {
-    this->_pid        = other._pid;
-    this->_stat_path  = other._stat_path;
-    this->_statm_path = other._statm_path;
+    this->_stat_file =
+        std::ifstream(std::string("/proc/") +
+                      std::to_string(pid) + "/stat");
+    this->_statm_file =
+        std::ifstream(std::string("/proc/") +
+                      std::to_string(pid) + "/statm");
 
     this->update();
 }
 
 Process::Process(Process&& other) {
     this->_pid        = other._pid;
-    this->_stat_path  = std::move(other._stat_path);
-    this->_statm_path = std::move(other._statm_path);
+    this->_stat_file  = std::move(other._stat_file);
+    this->_statm_file = std::move(other._statm_file);
 
     this->update();
-}
-
-Process& Process::operator=(const Process& other) {
-    this->_pid        = other._pid;
-    this->_stat_path  = other._stat_path;
-    this->_statm_path = other._statm_path;
-
-    this->update();
-
-    return *this;
 }
 
 Process& Process::operator=(Process&& other) {
     this->_pid        = other._pid;
-    this->_stat_path  = std::move(other._stat_path);
-    this->_statm_path = std::move(other._statm_path);
+    this->_stat_file  = std::move(other._stat_file);
+    this->_statm_file = std::move(other._statm_file);
 
     this->update();
 
@@ -96,30 +81,31 @@ bool Process::is_kernel() const {
 }
 
 bool Process::update() {
-    if (this->_statm_path == "") {
-        return false;
-    }
-    std::ifstream stat_file(this->_stat_path);
-    std::ifstream statm_file(this->_statm_path);
-
-    if (!stat_file.is_open() || !statm_file.is_open())
+    if (!_stat_file.is_open() || !_statm_file.is_open())
         return false;
 
-    stat_file >> this->_stat.pid;
+    if (_stat_file.tellg() != 0)
+        _stat_file.seekg(0);
+    if (_statm_file.tellg() != 0)
+        _statm_file.seekg(0);
+
+    _stat_file >> this->_stat.pid;
     // i lov u c++ never change
     this->_stat.name = "";
-    while (!stat_file.eof() && !stat_file.bad()) {
-        char buf = stat_file.get();
+    while (!_stat_file.eof() && !_stat_file.bad()) {
+        char buf = _stat_file.get();
+        if (buf == -1)
+            return false;
         if (buf == ')')
             break;
         if (buf != '(')
             this->_stat.name += buf;
     }
 
-    stat_file >> this->_stat.state >>
+    _stat_file >> this->_stat.state >>
         this->_stat.parent_pid >> this->_stat.group_id;
 
-    statm_file >> this->_statm.size >>
+    _statm_file >> this->_statm.size >>
         this->_statm.resident >> this->_statm.shared >>
         this->_statm.text >> this->_statm.lib >>
         this->_statm.data >> this->_statm.dt;
@@ -206,6 +192,7 @@ void System::update() {
     }
     closedir(dir);
 
+    // update all loaded pids
     for (auto& entry : this->_process) {
         auto pos = std::find(
             pids.begin(), pids.end(), entry.first);
@@ -220,6 +207,7 @@ void System::update() {
             this->_process.erase(entry.first);
     }
 
+    // create pids
     for (const auto& pid : pids) {
         this->_process[pid] = Sys::Process(pid);
     }
