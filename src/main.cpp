@@ -1,6 +1,7 @@
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
+#include <iostream>
 #include <lua.hpp>
 
 #include <thread>
@@ -12,9 +13,8 @@
 #include <render/system_rend.hpp>
 #include <render/widgets.hpp>
 #include <render/window.hpp>
-#include <system.hpp>
-
-lua_State* L = nullptr;
+#include <system/system.hpp>
+#include "render/lua_bindings.hpp"
 
 bool got_original = false;
 
@@ -41,15 +41,26 @@ void set_raw_mode() {
 }
 
 int main(int argc, char* argv[]) {
-    printf("main\n");
+    ly::render::lua::lua_init();
+    ly::render::Buffer test_buf(10, 10);
 
-    L = luaL_newstate();
-    luaL_requiref(L, "base", luaopen_base, true);
-    luaL_requiref(L, "math", luaopen_math, true);
-    luaL_requiref(L, "table", luaopen_table, true);
-    luaL_requiref(L, "package", luaopen_package, true);
-    luaL_requiref(L, "string", luaopen_string, true);
+    lua_pushlightuserdata(ly::render::lua::L, &test_buf);
+    luaL_getmetatable(ly::render::lua::L, "Buffer");
+    lua_setmetatable(ly::render::lua::L, -2);
+    lua_setglobal(ly::render::lua::L, "buffer");
 
+    if (luaL_dofile(ly::render::lua::L, "./test.lua") !=
+        LUA_OK) {
+        std::cerr << "Lua Error: "
+                  << lua_tostring(ly::render::lua::L, -1)
+                  << '\n';
+        lua_pop(ly::render::lua::L, 1);
+    }
+
+    std::cout << test_buf;
+}
+/*
+int main(int argc, char* argv[]) {
     using namespace std::chrono;
     using namespace ly;
 
@@ -136,3 +147,4 @@ int main(int argc, char* argv[]) {
     fflush(stdout);
     return 0;
 }
+*/

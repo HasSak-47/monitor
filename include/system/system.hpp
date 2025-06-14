@@ -1,5 +1,5 @@
-#ifndef __SYSTEM_HPP__
-#define __SYSTEM_HPP__
+#ifndef __SYSTEM_SYSTEM_HPP__
+#define __SYSTEM_SYSTEM_HPP__
 
 #include <cstdint>
 
@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-namespace Sys {
+namespace sys {
 
 class System;
 class Process;
@@ -122,6 +122,6 @@ public:
 
 extern System sys;
 
-} // namespace Sys
+} // namespace sys
 
 #endif // __PROCESS_HPP__

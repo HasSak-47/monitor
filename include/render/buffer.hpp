@@ -50,6 +50,9 @@ public:
     ConsoleColor(Color<u8> col)
         : _ty(TrueColor), dt(col) {};
 
+    ConsoleColor(int col)
+        : _ty(Bit), dt((_ColorUnion::_BitCol)col) {};
+
     bool operator==(const ConsoleColor& other) const;
     void display();
 

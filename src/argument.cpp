@@ -1,6 +1,8 @@
 #include <ly/argument.hpp>
-
+ 
 using namespace ly;
+
+/*
 
 Arg::Arg(char* input) {
     char* end;
@@ -38,3 +40,5 @@ Arg::~Arg() {
         data.s.~basic_string();
     }
 }
+
+*/

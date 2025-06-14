@@ -6,9 +6,9 @@
 #include <utility>
 #include <vector>
 
-#include "../system.hpp"
 #include "./widgets.hpp"
 #include "render/buffer.hpp"
+#include "system/system.hpp"
 
 namespace ly::render::sys {
 
@@ -16,7 +16,7 @@ class Memory : public widgets::Widget {
 private:
     std::vector<float> _pers;
     // used buffer cached
-    const std::vector<ConsoleColor> _cols = {
+    std::vector<ConsoleColor> _cols = {
         {
          ConsoleColor::GREEN,
          ConsoleColor::BLUE,
@@ -26,18 +26,23 @@ private:
 
 public:
     Memory() : _pers(3) {}
+
     ~Memory() override {}
 
+    void set_color(size_t idx, ConsoleColor col) {
+        _cols[idx] = col;
+    }
+
     void update() override {
-        float max = Sys::sys._max_mem;
+        float max = ::sys::sys._max_mem;
 
         this->_pers[0] =
-            (Sys::sys._max_mem - Sys::sys._av_mem) /
+            (::sys::sys._max_mem - ::sys::sys._av_mem) /
             max; // used
         this->_pers[1] =
-            Sys::sys._buffer_mem / max; // buffered
+            ::sys::sys._buffer_mem / max; // buffered
         this->_pers[2] =
-            Sys::sys._cached_mem / max; // cached
+            ::sys::sys._cached_mem / max; // cached
     }
 
     void render(Buffer& buf) const override {
@@ -52,10 +57,10 @@ public:
 
 class Process : public widgets::Widget {
 private:
-    const Sys::Process& _proc;
+    const ::sys::Process& _proc;
 
 public:
-    Process(const Sys::Process& proc) : _proc(proc) {}
+    Process(const ::sys::Process& proc) : _proc(proc) {}
 
     void render(Buffer& buffer) const override {
         buffer.get_sub_buffer(0, 0, 6, 1)
@@ -79,20 +84,20 @@ private:
     bool _kernel;
 
     using _Sorter = std::function<bool(
-        const Sys::Process*&, const Sys::Process*&)>;
+        const ::sys::Process*&, const ::sys::Process*&)>;
 
-    static inline bool _sort_name(
-        const Sys::Process*& a, const Sys::Process*& b) {
+    static inline bool _sort_name(const ::sys::Process*& a,
+        const ::sys::Process*& b) {
         return a->_stat.name < b->_stat.name;
     }
 
-    static inline bool _sort_pid(
-        const Sys::Process*& a, const Sys::Process*& b) {
+    static inline bool _sort_pid(const ::sys::Process*& a,
+        const ::sys::Process*& b) {
         return a->_stat.pid < b->_stat.pid;
     }
 
-    static inline bool _sort_mem(
-        const Sys::Process*& a, const Sys::Process*& b) {
+    static inline bool _sort_mem(const ::sys::Process*& a,
+        const ::sys::Process*& b) {
         return a->total() > b->total();
     }
 
@@ -122,7 +127,7 @@ public:
     void inc_offset() {
         // should check for only non kernel processes if
         // this->_kernel = false;
-        auto& procs = Sys::sys.get_processes();
+        auto& procs = ::sys::sys.get_processes();
         if (_offset + 1 < procs.size()) {
             _offset += 1;
         }
@@ -137,14 +142,14 @@ public:
     }
 
     void goto_end() {
-        _offset = Sys::sys.get_processes().size();
+        _offset = ::sys::sys.get_processes().size();
     }
     void goto_beg() { _offset = 0; }
 
     void render(Buffer& buf) const override {
-        std::vector<const Sys::Process*> procs = {};
+        std::vector<const ::sys::Process*> procs = {};
         for (const auto& [_, proc] :
-            Sys::sys.get_processes()) {
+            ::sys::sys.get_processes()) {
             procs.push_back(&proc);
         }
 

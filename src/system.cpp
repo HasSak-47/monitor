@@ -8,16 +8,15 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
-#include <map>
-#include <stdexcept>
 #include <string>
+#include <unordered_map>
 
 // unix stuff
 #include <dirent.h>
 #include <unistd.h>
 
 // my stuff
-#include <system.hpp>
+#include <system/system.hpp>
 
 static bool is_process(struct dirent* file) {
     if (file->d_type != DT_DIR)
@@ -32,11 +31,11 @@ static bool is_process(struct dirent* file) {
     return false;
 }
 
-namespace Sys {
+namespace sys {
 System sys = {};
 }
 
-using namespace Sys;
+using namespace sys;
 
 Process::Process() {}
 
@@ -80,6 +79,8 @@ bool Process::is_kernel() const {
     return this->_stat.parent_pid <= 2;
 }
 
+// TODO: rework this so constructor gets the static data
+// and update the dynamic data
 bool Process::update() {
     if (!_stat_file.is_open() || !_statm_file.is_open())
         return false;
@@ -209,14 +210,14 @@ void System::update() {
 
     // create pids
     for (const auto& pid : pids) {
-        this->_process[pid] = Sys::Process(pid);
+        this->_process[pid] = sys::Process(pid);
     }
 
     this->stat.update();
 
     std::ifstream file("/proc/meminfo");
     std::string name, type;
-    std::map<std::string, size_t> map;
+    std::unordered_map<std::string, size_t> map;
     size_t len;
     while (file >> name >> len >> type) map[name] = len;
 
