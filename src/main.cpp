@@ -40,6 +40,7 @@ void set_raw_mode() {
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
 }
 
+/*
 int main(int argc, char* argv[]) {
     ly::render::lua::lua_init();
     ly::render::Buffer test_buf(10, 10);
@@ -59,7 +60,7 @@ int main(int argc, char* argv[]) {
 
     std::cout << test_buf;
 }
-/*
+*/
 int main(int argc, char* argv[]) {
     using namespace std::chrono;
     using namespace ly;
@@ -140,11 +141,9 @@ int main(int argc, char* argv[]) {
         // frame++;
     }
 
-    lua_close(L);
     unset_raw_mode();
     printf("\e[?1049l"); // leave alternate screen
     printf("\e[?25h");   // show cursor
     fflush(stdout);
     return 0;
 }
-*/

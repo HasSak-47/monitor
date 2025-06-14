@@ -6,7 +6,7 @@
 using namespace ly::render;
 using namespace ly::render::widgets;
 
-void Block::render(Buffer& buf) const {
+void Block::render(Buffer& buf, size_t tick) const {
     if (buf.width() < 2 || buf.height() < 2) {
         return;
     }
@@ -29,7 +29,7 @@ void Block::render(Buffer& buf) const {
     buf.get(w, h).chr = '+';
 }
 
-void Text::render(Buffer& buf) const {
+void Text::render(Buffer& buf, size_t tick) const {
     size_t max = std::min(buf.width(), this->_text.size());
     for (size_t i = 0; i < max; ++i) {
         buf.get(i, 0).chr = this->_text[i];
@@ -37,7 +37,7 @@ void Text::render(Buffer& buf) const {
     }
 }
 
-void Bar::render(Buffer& buf) const {
+void Bar::render(Buffer& buf, size_t tick) const {
     size_t end = buf.width();
     if (this->_show && buf.width() > 7) {
         constexpr size_t sub_width = 10;
@@ -74,7 +74,7 @@ void Bar::render(Buffer& buf) const {
     }
 }
 
-void MultiBar::render(Buffer& buf) const {
+void MultiBar::render(Buffer& buf, size_t tick) const {
     size_t end = buf.width();
 
     if (this->_show && buf.width() > 7) {

@@ -66,7 +66,7 @@ public:
 };
 
 struct Unit {
-    char32_t chr = ' ';
+    char32_t chr = 'a';
     ConsoleColor col;
     Unit();
 };

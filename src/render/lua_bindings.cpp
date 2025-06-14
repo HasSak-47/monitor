@@ -8,6 +8,15 @@ lua_State* ly::render::lua::L = nullptr;
 
 using namespace ly::render;
 
+static int _buffer_get_size(lua_State* L) {
+    Buffer* data = (Buffer*)lua_touserdata(L, 1);
+
+    lua_pushinteger(L, data->width());
+    lua_pushinteger(L, data->height());
+
+    return 2;
+}
+
 static int _buffer_set(lua_State* L) {
     Buffer* data = (Buffer*)lua_touserdata(L, 1);
     if (data == NULL) {
@@ -16,6 +25,15 @@ static int _buffer_set(lua_State* L) {
 
     size_t x = lua_tointeger(L, 2);
     size_t y = lua_tointeger(L, 3);
+
+    // map [1, b] to [0, b)
+    if (x <= 0)
+        x = 1;
+    if (y <= 0)
+        y = 1;
+
+    x -= 1;
+    y -= 1;
 
     // get first character
     char c = lua_tostring(L, 4)[0];
@@ -53,11 +71,6 @@ static int _buffer_set(lua_State* L) {
 
     return 0;
 }
-
-static const luaL_Reg buffer_methods[] = {
-    {"set", _buffer_set},
-    { NULL,        NULL}
-};
 
 /*
 static int _buffer_get(lua_State* L){
@@ -145,6 +158,9 @@ void lua::lua_init() {
 
     lua_pushcfunction(L, _buffer_set);
     lua_setfield(L, -2, "set");
+
+    lua_pushcfunction(L, _buffer_get_size);
+    lua_setfield(L, -2, "get_size");
 
     lua_pushvalue(L, -1);
     lua_setfield(L, -2, "__index");

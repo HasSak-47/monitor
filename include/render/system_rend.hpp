@@ -45,7 +45,8 @@ public:
             ::sys::sys._cached_mem / max; // cached
     }
 
-    void render(Buffer& buf) const override {
+    void render(
+        Buffer& buf, size_t _tick = 0) const override {
         buf.get_sub_buffer(0, 0, 4, 1)
             .render_widget("Mem:");
 
@@ -62,7 +63,8 @@ private:
 public:
     Process(const ::sys::Process& proc) : _proc(proc) {}
 
-    void render(Buffer& buffer) const override {
+    void render(
+        Buffer& buffer, size_t _tick = 0) const override {
         buffer.get_sub_buffer(0, 0, 6, 1)
             .render_widget(this->_proc._stat.pid);
         buffer.get_sub_buffer(6, 0, 16, 1)
@@ -146,7 +148,7 @@ public:
     }
     void goto_beg() { _offset = 0; }
 
-    void render(Buffer& buf) const override {
+    void render(Buffer& buf, size_t tick) const override {
         std::vector<const ::sys::Process*> procs = {};
         for (const auto& [_, proc] :
             ::sys::sys.get_processes()) {

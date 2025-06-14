@@ -10,7 +10,8 @@ class Widget {
 public:
     virtual ~Widget() {};
     virtual void update() {};
-    virtual void render(Buffer& buffer) const = 0;
+    virtual void render(
+        Buffer& buffer, size_t tick = 0) const = 0;
 };
 
 } // namespace ly::render::widgets
@@ -33,7 +34,8 @@ public:
     Block() {}
     ~Block() {}
 
-    void render(Buffer& buffer) const override;
+    void render(
+        Buffer& bufferm, size_t tick = 0) const override;
 };
 
 template <typename T>
@@ -46,7 +48,8 @@ public:
     ~Box() {}
     Box(T& capture) : _capture(capture) {}
 
-    void render(Buffer& buf) const override {
+    void render(
+        Buffer& buf, size_t tick = 0) const override {
         buf.render_widget(Block());
         if (buf.width() < 3 || buf.height() < 3) {
             return;
@@ -69,7 +72,8 @@ public:
         : _text(text), _col(col) {}
     ~Text() {}
 
-    void render(Buffer& buf) const override;
+    void render(
+        Buffer& buf, size_t tick = 0) const override;
 };
 
 class Bar : public Widget {
@@ -82,7 +86,8 @@ public:
         : _val(val), _show(show) {}
     ~Bar() {}
 
-    void render(Buffer& buf) const override;
+    void render(
+        Buffer& buf, size_t tick = 0) const override;
 };
 
 class MultiBar : public Widget {
@@ -99,7 +104,8 @@ public:
 
     ~MultiBar() {}
 
-    void render(Buffer& buf) const override;
+    void render(
+        Buffer& buf, size_t tick = 0) const override;
 };
 
 class Table : public Widget {
@@ -112,7 +118,8 @@ public:
 
     ~Table() {}
 
-    void render(Buffer& buf) const override;
+    void render(
+        Buffer& buf, size_t tick = 0) const override;
 };
 
 } // namespace ly::render::widgets
