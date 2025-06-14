@@ -1,5 +1,5 @@
----@class Bar: Widget
-Bar = {
-    render = function()
-    end
+widget = {
+    new = function(...) end,
+    render = function(...) end,
+    update = function(...) end,
 }

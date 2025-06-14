@@ -19,22 +19,24 @@
 ---@class Buffer
 ---@field cell Unit[][]
 
----@class Widget
----@field type string
----@field style string
----@field render function
+local Bar = widget:new {
+    render = function(buffer, tick)
+        local x, _ = buffer:get_size();
+        buffer.set(1, 1, '[', { type = "bit", r = 1, g = 1, b = 1 })
+        buffer.set(x, 1, ']', { type = "bit", r = 1, g = 1, b = 1 })
+        for i = 2, x - 1, 1 do
+            buffer.set(x, 1, '|', { type = "bit", r = 1, g = 1, b = 1 })
+        end
+    end
+};
 
-local M = Widget:new();
-local Bar = Widget:new();
+return widet:new {
+    render = function(buffer, tick)
+        local x, y = buffer:get_size();
+        local bar1 = Bar:new()
+        local bar2 = Bar:new()
 
-function Bar:render(buffer)
-    --- ...
-end
-
-function M:render(buffer)
-    local b = Bar:new()
-    b.render(buffer.sub(0, 0, 10, 1))
-    --- ...
-end
-
-return M
+        Bar:render(buffer.get_subbuffer(1, 1, x, 1));
+        Bar:render(buffer.get_subbuffer(1, 2, x, 1));
+    end
+}
