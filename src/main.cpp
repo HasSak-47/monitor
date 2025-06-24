@@ -26,9 +26,11 @@ int main(int argc, char* argv[]) {
     ly::render::lua::State state;
     auto widget = state.from_file("init.lua");
 
-    size_t tick = 0;
-    char cbuf   = 0;
-    auto val    = render::lua::Value::float_val(10.);
+    float fps    = 0;
+    float tdelta = 0;
+    size_t tick  = 0;
+    char cbuf    = 0;
+    auto val     = render::lua::Value::float_val(10.);
     ly::render::enter_alternate_screen();
     ly::render::set_raw_mode();
 
@@ -63,9 +65,12 @@ int main(int argc, char* argv[]) {
         auto delta = t_now - t_start;
 
         // wait for end of tick
-        if (delta < tick_duration)
+        if (delta < tick_duration) {
+            tdelta =
+                duration_cast<milliseconds>(delta).count();
             std::this_thread::sleep_for(
                 tick_duration - delta);
+        }
 
         // Optional: print elapsed time for debugging
         auto t_end = high_resolution_clock::now();
@@ -75,6 +80,8 @@ int main(int argc, char* argv[]) {
         tick++;
         state.set_data("tick",
             render::lua::Value::integer((int64_t)tick));
+        state.set_data("tdelta",
+            render::lua::Value::float_val((double)tdelta));
         state.set_data("fps",
             render::lua::Value::float_val((double)fps));
     }
