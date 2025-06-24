@@ -50,9 +50,22 @@ ly::render::lua::Value from_process(
 void set_process_table(ly::render::lua::State& state) {
     using namespace ly::render::lua;
 
-    int offset = state.get_data("offset").as_integer();
     bool show_kernel =
         state.get_data("show_kernel").as_boolean();
+
+    std::string sorting =
+        state.get_data("sorting").as_string();
+
+    _Sorter sorter = _sort_mem;
+    if (sorting == "pid") {
+        sorter = _sort_pid;
+    }
+    else if (sorting == "name") {
+        sorter = _sort_name;
+    }
+    else {
+        sorter = _sort_mem;
+    }
 
     std::vector<const sys::Process*> procs;
     for (const auto& [_, proc] : sys::sys.get_processes()) {
@@ -72,23 +85,11 @@ void set_process_table(ly::render::lua::State& state) {
         }
     }
 
-    std::sort(procs.begin(), procs.end(), _sort_mem);
-
-    // Clamp offset
-    if (offset < 0)
-        offset = 0;
-    if ((size_t)offset > procs.size())
-        offset = procs.size();
-
-    state.set_data("offset", Value::integer(offset));
-
-    // Optional: define max entries per page
-    constexpr int page_size = 100;
-    size_t end = std::min<size_t>(page_size, procs.size());
+    std::sort(procs.begin(), procs.end(), sorter);
 
     Value::ArrayType array;
-    array.reserve(end - offset);
-    for (size_t i = offset; i < end; ++i) {
+
+    for (size_t i = 0; i < procs.size(); ++i) {
         array.push_back(from_process(procs[i]));
     }
 
@@ -101,28 +102,29 @@ void set_process_table(ly::render::lua::State& state) {
 int main(int argc, char* argv[]) {
     using namespace std::chrono;
     using namespace ly;
+    using namespace ly::render;
 
     constexpr auto tick_duration = 16.6666ms;
-    render::Window win;
+    Window win;
 
-    ly::render::lua::State state;
+    lua::State state;
     auto widget = state.from_file("init.lua");
 
-    state.set_data(
-        "offset", render::lua::Value::integer(0));
+    state.set_data("offset", lua::Value::integer(0));
+    state.set_data("sorting", lua::Value::string("memory"));
 
     float fps    = 0;
     float tdelta = 0;
     size_t tick  = 0;
     char cbuf    = 0;
 
-    ly::render::enter_alternate_screen();
-    ly::render::set_raw_mode();
+    enter_alternate_screen();
+    set_raw_mode();
 
     while (!state.should_exit()) {
         auto t_start = high_resolution_clock::now();
 
-        ly::render::reset_cursor();
+        reset_cursor();
         fflush(stdout);
 
         if (read(STDIN_FILENO, &cbuf, 1) > 0) {
@@ -130,16 +132,21 @@ int main(int argc, char* argv[]) {
         }
 
         state.set_data(
-            "total_mem", render::lua::Value::integer(
+            "total_mem", lua::Value::integer(
                              (int64_t)sys::sys._max_mem));
 
-        state.set_data(
-            "av_mem", render::lua::Value::integer(
-                          (int64_t)sys::sys._av_mem));
+        state.set_data("av_mem",
+            lua::Value::integer((int64_t)sys::sys._av_mem));
 
         state.set_data("cached_mem",
-            render::lua::Value::integer(
+            lua::Value::integer(
                 (int64_t)sys::sys._cached_mem));
+
+        state.set_data("width",
+            lua::Value::integer((int64_t)win.width()));
+
+        state.set_data("heigth",
+            lua::Value::integer((int64_t)win.height()));
 
         set_process_table(state);
 

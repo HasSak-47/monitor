@@ -206,11 +206,16 @@ local M_type = widget:extend {
             self.debug_box:render(buffer:get_sub(x // 2, y // 2, 20, 20))
         end
         local ps = state.processes
-        for i, p in ipairs(ps) do
+        for i = 1, y - 1, 1 do
             if i + 1 >= y then break end
-            buffer:get_sub(1, i + 1, 8, 1):render(p.pid)
-            buffer:get_sub(8, i + 1, x - 20, 1):render(p.name)
-            buffer:get_sub(30, i + 1, x - 30, 1):render(format_mem(p.mem))
+
+            local idx = state.offset + i
+            if idx > state.process_total then break end
+
+
+            buffer:get_sub(1, i + 1, 5, 1):render(ps[idx].pid)
+            buffer:get_sub(8, i + 1, x - 20, 1):render(ps[idx].name)
+            buffer:get_sub(40, i + 1, x - 40, 1):render(format_mem(ps[idx].mem))
         end
     end,
 
@@ -230,8 +235,14 @@ state.on_event('keypress', function(key)
         return
     elseif key == 'j' then
         state.offset = state.offset + 1
+
+        if state.process_total - state.offset < state.heigth then
+            state.offset = state.process_total - state.heigth
+        end
     elseif key == 'k' then
-        state.offset = state.offset - 1
+        state.offset = math.max(0, state.offset - 1)
+    elseif key == 'a' then
+        state.show_kernel = not state.show_kernel
     elseif key == 'd' then
         M.debug = not M.debug
     end
