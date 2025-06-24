@@ -72,6 +72,8 @@ local DebugBox = widget:extend({
             string.format("fps:    %3.f", state.fps or 0),
             string.format("tick:   %3.f", state.tick or 0),
             string.format("tdelta: %3.f", state.tdelta or 0),
+            string.format("offset: %d", state.offset or 0),
+            string.format("process_total: %d", state.process_total or 0),
         }
 
         local width = 30
@@ -167,6 +169,16 @@ local MultiBar = widget:extend({
 })
 MultiBar.__index = MultiBar
 
+local function format_mem(mem)
+    local units = { "B", "KB", "MB", "GB", "TB", "PB" }
+    local i = 1
+    while mem >= 1024 and i < #units do
+        mem = mem / 1024
+        i = i + 1
+    end
+    return string.format("%.1f%s", mem, units[i])
+end
+
 ---@class Widget
 local M_type = widget:extend {
     new = function(self)
@@ -193,6 +205,13 @@ local M_type = widget:extend {
         if self.debug then
             self.debug_box:render(buffer:get_sub(x // 2, y // 2, 20, 20))
         end
+        local ps = state.processes
+        for i, p in ipairs(ps) do
+            if i + 1 >= y then break end
+            buffer:get_sub(1, i + 1, 8, 1):render(p.pid)
+            buffer:get_sub(8, i + 1, x - 20, 1):render(p.name)
+            buffer:get_sub(30, i + 1, x - 30, 1):render(format_mem(p.mem))
+        end
     end,
 
     update = function(self)
@@ -209,6 +228,10 @@ state.on_event('keypress', function(key)
     if key == 'q' then
         state.exit = true;
         return
+    elseif key == 'j' then
+        state.offset = state.offset + 1
+    elseif key == 'k' then
+        state.offset = state.offset - 1
     elseif key == 'd' then
         M.debug = not M.debug
     end
