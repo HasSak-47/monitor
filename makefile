@@ -10,7 +10,7 @@ LUI_INCLUDE := $(LUI_DIR)/include
 
 C := ccache g++
 AR := ar
-CFLAGS := -g -I"$(INCLUDE_DIR)" -I"$(LUI_INCLUDE)" -std=c++23 -MMD -MP -c
+CFLAGS := -g -pg -O2 -I"$(INCLUDE_DIR)" -I"$(LUI_INCLUDE)" -std=c++23 -MMD -MP -c
 LDFLAGS := -L"$(LUI_DIR)/lib" -llui -llua
 LDOUT := -o "$(OUT)"
 

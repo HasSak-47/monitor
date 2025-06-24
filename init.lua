@@ -60,7 +60,7 @@ local Box = widget:extend({
         local t = self.super.new(self)
         setmetatable(t, self)
 
-        t._type = "DebugBox"
+        t._type = "Box"
         t.__index = self
         t.inner = inner
 
@@ -85,6 +85,7 @@ local Box = widget:extend({
     end
 })
 
+local last_keys = ''
 ---@class Widget
 local DebugData = widget:extend({
     new = function(self)
@@ -105,9 +106,11 @@ local DebugData = widget:extend({
             string.format("tdelta: %3.f", state.tdelta or 0),
             string.format("offset: %d", state.offset or 0),
             string.format("process_total: %d", state.process_total or 0),
+            string.format("keys: %s", last_keys),
+            "show kernel: " .. state.show_kernel,
         }
         for i, line in ipairs(lines) do
-            if i + 1 >= y then
+            if i >= y then
                 break
             end
             buffer:get_sub(1, i, x, 1):render(line)
@@ -294,6 +297,8 @@ state.on_event('keypress', function(key)
         M.help = not M.help
     elseif key == 'd' then
         M.debug = not M.debug
+    else
+        last_keys = string.sub(last_keys .. key, -10)
     end
 end)
 

@@ -111,6 +111,8 @@ int main(int argc, char* argv[]) {
     auto widget = state.from_file("init.lua");
 
     state.set_data("offset", lua::Value::integer(0));
+    state.set_data(
+        "show_kernel", lua::Value::boolean(false));
     state.set_data("sorting", lua::Value::string("memory"));
 
     float fps    = 0;
@@ -123,9 +125,8 @@ int main(int argc, char* argv[]) {
 
     while (!state.should_exit()) {
         auto t_start = high_resolution_clock::now();
-
         reset_cursor();
-        fflush(stdout);
+        win.resize();
 
         if (read(STDIN_FILENO, &cbuf, 1) > 0) {
             state.press(cbuf);
@@ -150,7 +151,9 @@ int main(int argc, char* argv[]) {
 
         set_process_table(state);
 
-        widget.update();
+        if (tick % 10 == 0) {
+            widget.update();
+        }
         win.get_buf().render_widget(widget);
         win.render();
 
