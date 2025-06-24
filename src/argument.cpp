@@ -1,7 +1,3 @@
-#include <ly/argument.hpp>
- 
-using namespace ly;
-
 /*
 
 Arg::Arg(char* input) {

@@ -1,85 +1,85 @@
 #include <chrono>
+#include <lua.hpp>
+#include <thread>
+
 #include <cstdio>
 #include <cstdlib>
-#include <iostream>
-#include <lua.hpp>
-
-#include <thread>
 
 #include <termios.h>
 #include <unistd.h>
 
-#include <render/buffer.hpp>
-#include <render/lua_bindings.hpp>
-#include <render/widgets.hpp>
-#include <render/window.hpp>
+#include <ly/render/buffer.hpp>
+#include <ly/render/lua_bindings.hpp>
+#include <ly/render/utils.hpp>
+#include <ly/render/widgets.hpp>
+#include <ly/render/window.hpp>
+
 #include <system/system.hpp>
-
-bool got_original = false;
-
-struct termios orig_termios = {};
-
-void unset_raw_mode() {
-    if (got_original)
-        tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
-}
-
-void set_raw_mode() {
-    if (!got_original) {
-        tcgetattr(STDIN_FILENO, &orig_termios);
-        atexit(unset_raw_mode);
-        got_original = true;
-    }
-
-    struct termios raw = orig_termios;
-    raw.c_lflag &= ~(ECHO | ICANON | ISIG | IEXTEN);
-    raw.c_cc[VMIN]  = 0;
-    raw.c_cc[VTIME] = 0;
-
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
-}
 
 int main(int argc, char* argv[]) {
     using namespace std::chrono;
     using namespace ly;
 
-    printf("\e[?1049h"); // enter alternate screen
-    printf("\e[0;0H");   // move cursor to 0
-    printf("\e[?25l");   // hide cursor
-    fflush(stdout);
-    set_raw_mode();
-
-    constexpr auto frame_duration = 16.6666ms;
+    constexpr auto tick_duration = 16.6666ms;
     render::Window win;
 
-    ly::render::lua::lua_init();
+    ly::render::lua::State state;
+    auto widget = state.from_file("init.lua");
 
-    float fps    = 0.;
-    size_t frame = 0;
-    while (true) {
+    size_t tick = 0;
+    char cbuf   = 0;
+    auto val    = render::lua::Value::float_val(10.);
+    ly::render::enter_alternate_screen();
+    ly::render::set_raw_mode();
+
+    while (!state.should_exit()) {
         auto t_start = high_resolution_clock::now();
-        printf("\e[0;0H"); // return cursor to 0,0
 
-        // frame rate calc
+        ly::render::reset_cursor();
+        fflush(stdout);
+
+        if (read(STDIN_FILENO, &cbuf, 1) > 0) {
+            state.press(cbuf);
+        }
+
+        state.set_data(
+            "total_mem", render::lua::Value::integer(
+                             (int64_t)sys::sys._max_mem));
+
+        state.set_data(
+            "av_mem", render::lua::Value::integer(
+                          (int64_t)sys::sys._av_mem));
+
+        state.set_data("cached_mem",
+            render::lua::Value::integer(
+                (int64_t)sys::sys._cached_mem));
+
+        widget.update();
+        win.get_buf().render_widget(widget);
+        win.render();
+
+        // tick rate calc
         auto t_now = high_resolution_clock::now();
         auto delta = t_now - t_start;
 
-        // wait for end of frame
-        if (delta < frame_duration)
+        // wait for end of tick
+        if (delta < tick_duration)
             std::this_thread::sleep_for(
-                frame_duration - delta);
+                tick_duration - delta);
 
         // Optional: print elapsed time for debugging
         auto t_end = high_resolution_clock::now();
         auto total_elapsed =
             duration_cast<milliseconds>(t_end - t_start);
-        fps = 1000.0 / total_elapsed.count();
-        frame++;
+        float fps = 1000.0 / total_elapsed.count();
+        tick++;
+        state.set_data("tick",
+            render::lua::Value::integer((int64_t)tick));
+        state.set_data("fps",
+            render::lua::Value::float_val((double)fps));
     }
 
-    unset_raw_mode();
-    printf("\e[?1049l"); // leave alternate screen
-    printf("\e[?25h");   // show cursor
-    fflush(stdout);
+    ly::render::leave_alternate_screen();
+    ly::render::unset_raw_mode();
     return 0;
 }

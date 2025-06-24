@@ -1,5 +1,7 @@
 -I
 include/
+-I
+lui/include/
 -llua
 -Wall
 -std=c++23
