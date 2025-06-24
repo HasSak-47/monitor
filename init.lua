@@ -69,6 +69,12 @@ local Box = widget:extend({
 
     render = function(self, buffer)
         local x, y = buffer:get_size()
+
+        for i = 2, x - 1 do
+            for j = 2, y - 1 do
+                buffer:set(i, j, ' ') -- Right
+            end
+        end
         for i = 2, x - 1 do
             buffer:set(i, 1, '-') -- Top
             buffer:set(i, y, '-') -- Bottom
@@ -244,16 +250,6 @@ local M_type = widget:extend {
         local sub = buffer:get_sub(1, 1, x, 1)
         self.memory:render(sub)
 
-        -- debug
-        if self.debug then
-            self.debug_box:render(buffer:get_sub(x // 2, y // 2, 20, 10))
-        end
-
-        -- help
-        if self.help then
-            self.help_box:render(buffer:get_sub(x // 2, y // 2, 40, 10))
-        end
-
         -- processes
         local ps = state.processes
         for i = 1, y - 1, 1 do
@@ -264,8 +260,19 @@ local M_type = widget:extend {
 
 
             buffer:get_sub(1, i + 1, 5, 1):render(ps[idx].pid)
-            buffer:get_sub(8, i + 1, x - 20, 1):render(ps[idx].name)
-            buffer:get_sub(40, i + 1, x - 40, 1):render(format_mem(ps[idx].mem))
+            buffer:get_sub(7, i + 1, 10, 1):render(string.format("%10s", format_mem(ps[idx].mem)))
+            buffer:get_sub(18, i + 1, 12, 1):render(ps[idx].name)
+            buffer:get_sub(31, i + 1, x - 30, 1):render(ps[idx].cmd)
+        end
+
+        -- debug
+        if self.debug then
+            self.debug_box:render(buffer:get_sub(x // 2, y // 2, 20, 10))
+        end
+
+        -- help
+        if self.help then
+            self.help_box:render(buffer:get_sub(x // 2, y // 2, 40, 10))
         end
     end,
 
@@ -297,9 +304,8 @@ state.on_event('keypress', function(key)
         M.help = not M.help
     elseif key == 'd' then
         M.debug = not M.debug
-    else
-        last_keys = string.sub(last_keys .. key, -10)
     end
+    last_keys = string.sub(last_keys .. key, -10)
 end)
 
 return M

@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 
@@ -43,12 +45,14 @@ Process::Process(char* pid)
     : Process(static_cast<pid_t>(std::stoi(pid))) {}
 
 Process::Process(pid_t pid) {
-    this->_stat_file =
-        std::ifstream(std::string("/proc/") +
-                      std::to_string(pid) + "/stat");
-    this->_statm_file =
-        std::ifstream(std::string("/proc/") +
-                      std::to_string(pid) + "/statm");
+    std::string pid_str = std::to_string(pid);
+    this->_stat_file    = std::ifstream(
+        std::string("/proc/") + pid_str + "/stat");
+    this->_statm_file = std::ifstream(
+        std::string("/proc/") + pid_str + "/statm");
+
+    this->_cmd_file = std::ifstream(
+        std::string("/proc/") + pid_str + "/cmdline");
 
     this->update();
 }
@@ -57,6 +61,7 @@ Process::Process(Process&& other) {
     this->_pid        = other._pid;
     this->_stat_file  = std::move(other._stat_file);
     this->_statm_file = std::move(other._statm_file);
+    this->_cmd_file   = std::move(other._cmd_file);
 
     this->update();
 }
@@ -65,6 +70,7 @@ Process& Process::operator=(Process&& other) {
     this->_pid        = other._pid;
     this->_stat_file  = std::move(other._stat_file);
     this->_statm_file = std::move(other._statm_file);
+    this->_cmd_file   = std::move(other._cmd_file);
 
     this->update();
 
@@ -110,6 +116,32 @@ bool Process::update() {
         this->_statm.resident >> this->_statm.shared >>
         this->_statm.text >> this->_statm.lib >>
         this->_statm.data >> this->_statm.dt;
+
+    if (_cmd_file.is_open()) {
+        _cmd_file.clear();
+        _cmd_file.seekg(0);
+        if (_cmd_file.fail())
+            std::cerr << "Seek failed!" << std::endl;
+
+        this->_cmd = "";
+
+        char c;
+
+        while (_cmd_file.get(c)) {
+            _cmd += (c == '\0') ? ' ' : c;
+        }
+
+        if (!_cmd.empty() && _cmd.back() == ' ') {
+            _cmd.pop_back();
+        }
+
+        if (_cmd.empty()) {
+            _cmd = "ofb[" + _stat.name + "]";
+        }
+    }
+    else {
+        this->_cmd = "cfb[" + this->_stat.name + "]";
+    }
 
     return true;
 }

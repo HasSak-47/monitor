@@ -25,6 +25,7 @@ public:
         char state;
         std::string name;
     };
+
     struct _proc_statm {
         size_t size;
         size_t resident;
@@ -35,13 +36,15 @@ public:
         size_t dt;
     };
 
+    std::string _cmd;
+
     _proc_stat _stat;
     _proc_statm _statm;
 
     pid_t _pid;
     std::ifstream _stat_file;
     std::ifstream _statm_file;
-    std::ifstream _cmd_line;
+    std::ifstream _cmd_file;
     bool _functional = false;
 
     Process();

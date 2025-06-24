@@ -1,8 +1,9 @@
-#include <algorithm>
 #include <lua.hpp>
 
+#include <algorithm>
 #include <chrono>
 #include <functional>
+#include <streambuf>
 #include <thread>
 
 #include <cstdio>
@@ -44,6 +45,7 @@ ly::render::lua::Value from_process(
         {"name",        Value::string(p->_stat.name)},
         { "pid",        Value::integer(p->_stat.pid)},
         { "mem", Value::integer((int64_t)p->total())},
+        { "cmd",              Value::string(p->_cmd)},
     });
 }
 
@@ -100,6 +102,14 @@ void set_process_table(ly::render::lua::State& state) {
 }
 
 int main(int argc, char* argv[]) {
+    std::ofstream error_log("errors.txt");
+    if (!error_log) {
+        std::cerr << "Failed to open error log\n";
+        return 1;
+    }
+
+    std::cerr.rdbuf(error_log.rdbuf());
+
     using namespace std::chrono;
     using namespace ly;
     using namespace ly::render;
@@ -112,7 +122,7 @@ int main(int argc, char* argv[]) {
 
     state.set_data("offset", lua::Value::integer(0));
     state.set_data(
-        "show_kernel", lua::Value::boolean(false));
+        "show_kernel", lua::Value::boolean(true));
     state.set_data("sorting", lua::Value::string("memory"));
 
     float fps    = 0;
@@ -169,7 +179,6 @@ int main(int argc, char* argv[]) {
                 tick_duration - delta);
         }
 
-        // Optional: print elapsed time for debugging
         auto t_end = high_resolution_clock::now();
         auto total_elapsed =
             duration_cast<milliseconds>(t_end - t_start);
