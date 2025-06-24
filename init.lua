@@ -87,70 +87,7 @@ local Box = widget:extend({
         buffer:set(x, 1, '+')
         buffer:set(1, y, '+')
         buffer:set(x, y, '+')
-        buffer:get_sub(2, 2, x - 2, y - 2):render(string.format("%p", self.inner.render))
-    end
-})
-
-local last_keys = ''
----@class Widget
-local DebugData = widget:extend({
-    new = function(self)
-        local t = self.super.new(self)
-        setmetatable(t, self)
-
-        t._type = "DebugData"
-        t.__index = self
-
-        return t
-    end,
-
-    render = function(self, buffer)
-        local x, y = buffer:get_size()
-        local lines = {
-            string.format("fps:    %3.f", state.fps or 0),
-            string.format("tick:   %3.f", state.tick or 0),
-            string.format("tdelta: %3.f", state.tdelta or 0),
-            string.format("offset: %d", state.offset or 0),
-            string.format("process_total: %d", state.process_total or 0),
-            string.format("keys: %s", last_keys),
-            "show kernel: " .. state.show_kernel,
-        }
-        for i, line in ipairs(lines) do
-            if i >= y then
-                break
-            end
-            buffer:get_sub(1, i, x, 1):render(line)
-        end
-    end
-})
-
----@class Widget
-local HelpData = widget:extend({
-    new = function(self)
-        local t = self.super.new(self)
-        setmetatable(t, self)
-
-        t._type = "HelpData"
-        t.__index = self
-
-        return t
-    end,
-
-    render = function(self, buffer)
-        local x, y = buffer:get_size()
-        local lines = {
-            "press j or k to change offset",
-            "press d to show debug window",
-            "press h to show help window",
-            "press q to quit",
-            "press a to toggle kernel processes",
-        }
-        for i, line in ipairs(lines) do
-            if i + 1 >= y then
-                break
-            end
-            buffer:get_sub(1, i, x, 1):render(line)
-        end
+        self.inner:render(buffer:get_sub(2, 2, x - 2, y - 2))
     end
 })
 
@@ -226,6 +163,9 @@ local function format_mem(mem)
     return string.format("%.1f%s", mem, units[i])
 end
 
+local actions = {}
+
+local last_keys = ''
 ---@class Widget
 local M_type = widget:extend {
     new = function(self)
@@ -249,7 +189,7 @@ local M_type = widget:extend {
                     string.format("offset: %d", state.offset or 0),
                     string.format("process_total: %d", state.process_total or 0),
                     string.format("keys: %s", last_keys),
-                    "show kernel: " .. state.show_kernel,
+                    "show kernel: " .. tostring(state.show_kernel),
                 }
                 for i, line in ipairs(lines) do
                     if i > y then break end
@@ -257,7 +197,18 @@ local M_type = widget:extend {
                 end
             end
         })
-        t.help_box = Box:new(HelpData:new())
+        t.help_box = Box:new(widget:new {
+            render = function(_, buffer)
+                local x, y = buffer:get_size()
+                local i = 1
+                for key, data in pairs(actions) do
+                    local line = string.format(" [%s] - %s", key, data.desc)
+                    if i >= y then break end
+                    buffer:get_sub(1, i, x, 1):render(line)
+                    i = i + 1
+                end
+            end
+        })
         return t
     end,
 
@@ -303,37 +254,68 @@ M_type.__index = M_type
 
 local M = M_type:new();
 
-local actions = {
+state.on_event('keypress', function(key)
+    local action_entry = actions[key]
+    if action_entry then
+        action_entry.action()
+    end
+
+    last_keys = string.sub(last_keys .. key, -10)
+end)
+
+actions = {
     q = {
         action = function()
             state.exit = true
         end,
-        desc = ''
+        desc = 'to exit'
+    },
+
+    a = {
+        action = function()
+            state.show_kernel = not state.show_kernel
+        end,
+        desc = 'toggle show kernel'
+    },
+
+    j = {
+        action = function()
+            state.offset = state.offset + 1
+
+            if state.process_total - state.offset < state.heigth then
+                state.offset = state.process_total - state.heigth
+            end
+        end,
+        desc = 'increase proc offset'
+    },
+
+    k = {
+        action = function()
+            state.offset = math.max(0, state.offset - 1)
+        end,
+        desc = 'decrease proc offset'
+    },
+
+    r = {
+        action = function()
+            state.reload = true
+        end,
+        desc = 'sets reload flag'
+    },
+
+    h = {
+        action = function()
+            M.help = not M.help
+        end,
+        desc = 'toggle help'
+    },
+
+    d = {
+        action = function()
+            M.debug = not M.debug
+        end,
+        desc = 'toggle debug'
     },
 }
-
-state.on_event('keypress', function(key)
-    if key == 'q' then
-        state.exit = true;
-        return
-    elseif key == 'j' then
-        state.offset = state.offset + 1
-
-        if state.process_total - state.offset < state.heigth then
-            state.offset = state.process_total - state.heigth
-        end
-    elseif key == 'k' then
-        state.offset = math.max(0, state.offset - 1)
-    elseif key == 'a' then
-        state.show_kernel = not state.show_kernel
-    elseif key == 'h' then
-        M.help = not M.help
-    elseif key == 'r' then
-        state.reload = true
-    elseif key == 'd' then
-        M.debug = not M.debug
-    end
-    last_keys = string.sub(last_keys .. key, -10)
-end)
 
 return M
