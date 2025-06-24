@@ -44,6 +44,7 @@ ly::render::lua::Value from_process(
     return Value::map({
         {"name",        Value::string(p->_stat.name)},
         { "pid",        Value::integer(p->_stat.pid)},
+        {"ppid", Value::integer(p->_stat.parent_pid)},
         { "mem", Value::integer((int64_t)p->total())},
         { "cmd",              Value::string(p->_cmd)},
     });
@@ -102,14 +103,6 @@ void set_process_table(ly::render::lua::State& state) {
 }
 
 int main(int argc, char* argv[]) {
-    std::ofstream error_log("errors.txt");
-    if (!error_log) {
-        std::cerr << "Failed to open error log\n";
-        return 1;
-    }
-
-    std::cerr.rdbuf(error_log.rdbuf());
-
     using namespace std::chrono;
     using namespace ly;
     using namespace ly::render;

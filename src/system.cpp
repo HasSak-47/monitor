@@ -82,7 +82,7 @@ bool Process::func() {
 }
 
 bool Process::is_kernel() const {
-    return this->_stat.parent_pid <= 2;
+    return this->_stat.parent_pid == 1;
 }
 
 // TODO: rework this so constructor gets the static data

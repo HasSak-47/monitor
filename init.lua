@@ -87,7 +87,7 @@ local Box = widget:extend({
         buffer:set(x, 1, '+')
         buffer:set(1, y, '+')
         buffer:set(x, y, '+')
-        self.inner:render(buffer:get_sub(2, 2, x - 2, y - 2))
+        buffer:get_sub(2, 2, x - 2, y - 2):render(string.format("%p", self.inner.render))
     end
 })
 
@@ -239,7 +239,24 @@ local M_type = widget:extend {
         })
         t.debug = false
         t.help = false
-        t.debug_box = Box:new(DebugData:new())
+        t.debug_box = Box:new(widget:new {
+            render = function(_, buffer)
+                local x, y = buffer:get_size()
+                local lines = {
+                    string.format("fps:    %3.f", state.fps or 0),
+                    string.format("tick:   %3.f", state.tick or 0),
+                    string.format("tdelta: %3.f", state.tdelta or 0),
+                    string.format("offset: %d", state.offset or 0),
+                    string.format("process_total: %d", state.process_total or 0),
+                    string.format("keys: %s", last_keys),
+                    "show kernel: " .. state.show_kernel,
+                }
+                for i, line in ipairs(lines) do
+                    if i > y then break end
+                    buffer:get_sub(1, i, x, 1):render(line)
+                end
+            end
+        })
         t.help_box = Box:new(HelpData:new())
         return t
     end,
@@ -286,6 +303,15 @@ M_type.__index = M_type
 
 local M = M_type:new();
 
+local actions = {
+    q = {
+        action = function()
+            state.exit = true
+        end,
+        desc = ''
+    },
+}
+
 state.on_event('keypress', function(key)
     if key == 'q' then
         state.exit = true;
@@ -302,6 +328,8 @@ state.on_event('keypress', function(key)
         state.show_kernel = not state.show_kernel
     elseif key == 'h' then
         M.help = not M.help
+    elseif key == 'r' then
+        state.reload = true
     elseif key == 'd' then
         M.debug = not M.debug
     end
