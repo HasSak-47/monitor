@@ -55,12 +55,43 @@ local Bar = widget:extend({
 })
 
 ---@class Widget
-local DebugBox = widget:extend({
-    new = function(self)
+local Box = widget:extend({
+    new = function(self, inner)
         local t = self.super.new(self)
         setmetatable(t, self)
 
         t._type = "DebugBox"
+        t.__index = self
+        t.inner = inner
+
+        return t
+    end,
+
+    render = function(self, buffer)
+        local x, y = buffer:get_size()
+        for i = 2, x - 1 do
+            buffer:set(i, 1, '-') -- Top
+            buffer:set(i, y, '-') -- Bottom
+        end
+        for j = 2, y - 1 do
+            buffer:set(1, j, '|') -- Left
+            buffer:set(x, j, '|') -- Right
+        end
+        buffer:set(1, 1, '+')
+        buffer:set(x, 1, '+')
+        buffer:set(1, y, '+')
+        buffer:set(x, y, '+')
+        self.inner:render(buffer:get_sub(2, 2, x - 2, y - 2))
+    end
+})
+
+---@class Widget
+local DebugData = widget:extend({
+    new = function(self)
+        local t = self.super.new(self)
+        setmetatable(t, self)
+
+        t._type = "DebugData"
         t.__index = self
 
         return t
@@ -75,34 +106,41 @@ local DebugBox = widget:extend({
             string.format("offset: %d", state.offset or 0),
             string.format("process_total: %d", state.process_total or 0),
         }
-
-        local width = 30
-        local height = #lines + 2 -- 1 line padding top and bottom
-
-        -- Clamp to buffer
-        width = math.min(width, x)
-        height = math.min(height, y)
-
-        -- Draw border
-        for i = 2, width - 1 do
-            buffer:set(i, 1, '-')      -- Top
-            buffer:set(i, height, '-') -- Bottom
-        end
-        for j = 2, height - 1 do
-            buffer:set(1, j, '|')     -- Left
-            buffer:set(width, j, '|') -- Right
-        end
-        buffer:set(1, 1, '+')
-        buffer:set(width, 1, '+')
-        buffer:set(1, height, '+')
-        buffer:set(width, height, '+')
-
-        -- Draw text inside border
         for i, line in ipairs(lines) do
             if i + 1 >= y then
                 break
             end
-            buffer:get_sub(2, i + 1, width - 2, 1):render(line)
+            buffer:get_sub(1, i, x, 1):render(line)
+        end
+    end
+})
+
+---@class Widget
+local HelpData = widget:extend({
+    new = function(self)
+        local t = self.super.new(self)
+        setmetatable(t, self)
+
+        t._type = "HelpData"
+        t.__index = self
+
+        return t
+    end,
+
+    render = function(self, buffer)
+        local x, y = buffer:get_size()
+        local lines = {
+            "press j or k to change offset",
+            "press d to show debug window",
+            "press h to show help window",
+            "press q to quit",
+            "press a to toggle kernel processes",
+        }
+        for i, line in ipairs(lines) do
+            if i + 1 >= y then
+                break
+            end
+            buffer:get_sub(1, i, x, 1):render(line)
         end
     end
 })
@@ -191,7 +229,9 @@ local M_type = widget:extend {
             { type = "bit", r = 1, g = 1, b = 0, },
         })
         t.debug = false
-        t.debug_box = DebugBox:new()
+        t.help = false
+        t.debug_box = Box:new(DebugData:new())
+        t.help_box = Box:new(HelpData:new())
         return t
     end,
 
@@ -203,8 +243,15 @@ local M_type = widget:extend {
 
         -- debug
         if self.debug then
-            self.debug_box:render(buffer:get_sub(x // 2, y // 2, 20, 20))
+            self.debug_box:render(buffer:get_sub(x // 2, y // 2, 20, 10))
         end
+
+        -- help
+        if self.help then
+            self.help_box:render(buffer:get_sub(x // 2, y // 2, 40, 10))
+        end
+
+        -- processes
         local ps = state.processes
         for i = 1, y - 1, 1 do
             if i + 1 >= y then break end
@@ -243,6 +290,8 @@ state.on_event('keypress', function(key)
         state.offset = math.max(0, state.offset - 1)
     elseif key == 'a' then
         state.show_kernel = not state.show_kernel
+    elseif key == 'h' then
+        M.help = not M.help
     elseif key == 'd' then
         M.debug = not M.debug
     end
