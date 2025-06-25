@@ -35,7 +35,7 @@
 Clone the repository and build:
 
 ```bash
-git clone -b stable https://github.com/HasSak-47/monitor.git
+git clone -b --recurse-submodules stable https://github.com/HasSak-47/monitor.git
 cd monitor
 make build      # Build the application
 make run        # Run the default demo
