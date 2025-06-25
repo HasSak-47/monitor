@@ -165,7 +165,14 @@ local function format_mem(mem)
 end
 
 local actions = {}
+local sorts = {
+    "name",
+    "pid",
+    "mem",
+}
 
+
+local sort_idx = 0
 local last_keys = ''
 ---@class Widget
 local M_type = widget:extend {
@@ -178,6 +185,34 @@ local M_type = widget:extend {
             { type = "bit", r = 0, g = 1, b = 0, },
             { type = "bit", r = 1, g = 1, b = 0, },
         })
+
+        ---@class Widget
+        t.process = widget:new {
+            render = function(_, buffer)
+                local x, y = buffer:get_size()
+
+                local ps = state.processes
+                buffer:get_sub(1, 1, 5, 1):render('pid')
+                buffer:get_sub(7, 1, 10, 1):render('mem')
+                buffer:get_sub(18, 1, 12, 1):render('name')
+                buffer:get_sub(31, 1, x - 30, 1):render('cmd')
+                buffer:get_sub(x - 10, 1, 10, 1):render(sorts[sort_idx + 1])
+
+                for i = 1, y - 1, 1 do
+                    if i + 1 >= y then break end
+
+                    local idx = state.offset + i
+                    if idx > state.process_total then break end
+
+
+                    buffer:get_sub(1, i + 1, 5, 1):render(ps[idx].pid)
+                    buffer:get_sub(7, i + 1, 10, 1):render(string.format("%10s", format_mem(ps[idx].mem)))
+                    buffer:get_sub(18, i + 1, 12, 1):render(ps[idx].name)
+                    buffer:get_sub(31, i + 1, x - 30, 1):render(ps[idx].cmd)
+                end
+            end
+        }
+
         t.debug = false
         t.help = false
         t.debug_box = Box:new(widget:new {
@@ -219,25 +254,7 @@ local M_type = widget:extend {
         local sub = buffer:get_sub(1, 1, x, 1)
         self.memory:render(sub)
 
-        -- processes
-        local ps = state.processes
-        buffer:get_sub(1, 2, 5, 1):render('pid')
-        buffer:get_sub(7, 2, 10, 1):render('mem')
-        buffer:get_sub(18, 2, 12, 1):render('name')
-        buffer:get_sub(31, 2, x - 30, 1):render('cmd')
-
-        for i = 1, y - 1, 1 do
-            if i + 1 >= y then break end
-
-            local idx = state.offset + i
-            if idx > state.process_total then break end
-
-
-            buffer:get_sub(1, i + 2, 5, 1):render(ps[idx].pid)
-            buffer:get_sub(7, i + 2, 10, 1):render(string.format("%10s", format_mem(ps[idx].mem)))
-            buffer:get_sub(18, i + 2, 12, 1):render(ps[idx].name)
-            buffer:get_sub(31, i + 2, x - 30, 1):render(ps[idx].cmd)
-        end
+        buffer:get_sub(1, 2, x, y - 1):render(self.process)
 
         -- debug
         if state.debug then
@@ -279,6 +296,14 @@ actions = {
             state.exit = true
         end,
         desc = 'to exit'
+    },
+
+    s = {
+        action = function()
+            sort_idx = (sort_idx + 1) % 3;
+            state.sorting = sorts[sort_idx + 1]
+        end,
+        desc = 'changes process sorting'
     },
 
     a = {

@@ -101,6 +101,8 @@ void set_process_table(ly::render::lua::State& state) {
         Value::integer((int64_t)procs.size()));
 }
 
+std::string init_path = "./init.lua";
+
 int main(int argc, char* argv[]) {
     using namespace std::chrono;
     using namespace ly;
@@ -144,7 +146,7 @@ int main(int argc, char* argv[]) {
     });
     win.init_buffer();
 
-    auto widget = state.from_file("init.lua");
+    auto widget = state.from_file(init_path);
 
     state.set_data("offset", lua::Value::integer(0));
     state.set_data(
@@ -167,7 +169,7 @@ int main(int argc, char* argv[]) {
         reset_cursor();
         win.resize();
         if (state.get_data("reload").as_boolean() == true) {
-            widget = state.from_file("init.lua");
+            widget = state.from_file(init_path);
             state.set_data(
                 "reload", lua::Value::boolean(false));
         }

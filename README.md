@@ -43,7 +43,7 @@ make run        # Run the default demo
 
 ## Lua Scripting API
 
-Monitor is designed for Lua-driven customization. The entire interface—including widgets, rendering, and user input—is controlled from a Lua script.
+Lytop is designed for Lua-driven customization. The entire interface—including widgets, rendering, and user input—is controlled from a Lua script.
 
 ### Widget Architecture
 
@@ -88,7 +88,7 @@ local Bar = widget:extend({
 
 Memory values are automatically humanized using base-1024 formatting (e.g., 512MB, 2.1GB).
 
-## Extending the Monitor
+## Extending Lytop
 
 To create a new layout or behavior:
 
