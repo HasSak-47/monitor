@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <chrono>
 #include <functional>
-#include <streambuf>
 #include <thread>
 
 #include <cstdio>
@@ -108,9 +107,43 @@ int main(int argc, char* argv[]) {
     using namespace ly::render;
 
     constexpr auto tick_duration = 16.6666ms;
-    Window win;
 
+    Window win;
     lua::State state;
+
+    state.set_function("set_color", [&](lua_State* L) {
+        std::string type = lua_tostring(L, 1);
+
+        render::ConsoleColor& color = (type == "fg")
+                                          ? win.default_fc
+                                          : win.default_bc;
+        lua_getfield(L, 2, "type");
+        lua_getfield(L, 2, "r");
+        lua_getfield(L, 2, "g");
+        lua_getfield(L, 2, "b");
+
+        std::string ty = lua_tostring(L, -4);
+        int r          = lua_tointeger(L, -3);
+        int g          = lua_tointeger(L, -2);
+        int b          = lua_tointeger(L, -1);
+        lua_pop(L, 4);
+
+        if (ty == "bit") {
+            r     = (r & 1) << 0;
+            g     = (g & 1) << 1;
+            b     = (b & 1) << 2;
+            color = render::ConsoleColor(r | g | b);
+        }
+        else if (ty == "8bit") {
+            color =
+                render::ConsoleColor(render::Color<ly::u8>(
+                    r & 0xff, g & 0xff, b & 0xff));
+        }
+
+        return 0;
+    });
+    win.init_buffer();
+
     auto widget = state.from_file("init.lua");
 
     state.set_data("offset", lua::Value::integer(0));

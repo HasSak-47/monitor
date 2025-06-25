@@ -82,7 +82,9 @@ bool Process::func() {
 }
 
 bool Process::is_kernel() const {
-    return this->_stat.parent_pid == 1;
+    return !this->_cmd.empty() &&
+           this->_cmd.front() == '[' &&
+           this->_cmd.back() == ']';
 }
 
 // TODO: rework this so constructor gets the static data
@@ -136,7 +138,7 @@ bool Process::update() {
         }
 
         if (_cmd.empty()) {
-            _cmd = "ofb[" + _stat.name + "]";
+            _cmd = "[" + _stat.name + "]";
         }
     }
     else {

@@ -160,7 +160,8 @@ local function format_mem(mem)
         mem = mem / 1024
         i = i + 1
     end
-    return string.format("%.1f%s", mem, units[i])
+
+    return string.format("%.1f %s", mem, units[i])
 end
 
 local actions = {}
@@ -220,6 +221,11 @@ local M_type = widget:extend {
 
         -- processes
         local ps = state.processes
+        buffer:get_sub(1, 2, 5, 1):render('pid')
+        buffer:get_sub(7, 2, 10, 1):render('mem')
+        buffer:get_sub(18, 2, 12, 1):render('name')
+        buffer:get_sub(31, 2, x - 30, 1):render('cmd')
+
         for i = 1, y - 1, 1 do
             if i + 1 >= y then break end
 
@@ -227,10 +233,10 @@ local M_type = widget:extend {
             if idx > state.process_total then break end
 
 
-            buffer:get_sub(1, i + 1, 5, 1):render(ps[idx].pid)
-            buffer:get_sub(7, i + 1, 10, 1):render(string.format("%10s", format_mem(ps[idx].mem)))
-            buffer:get_sub(18, i + 1, 12, 1):render(ps[idx].name)
-            buffer:get_sub(31, i + 1, x - 30, 1):render(ps[idx].cmd)
+            buffer:get_sub(1, i + 2, 5, 1):render(ps[idx].pid)
+            buffer:get_sub(7, i + 2, 10, 1):render(string.format("%10s", format_mem(ps[idx].mem)))
+            buffer:get_sub(18, i + 2, 12, 1):render(ps[idx].name)
+            buffer:get_sub(31, i + 2, x - 30, 1):render(ps[idx].cmd)
         end
 
         -- debug
@@ -293,6 +299,20 @@ actions = {
         desc = 'increase proc offset'
     },
 
+    G = {
+        action = function()
+            state.offset = 0
+        end,
+        desc = 'goto start of procs'
+    },
+
+    g = {
+        action = function()
+            state.offset = state.process_total - state.heigth
+        end,
+        desc = 'goto end of procs'
+    },
+
     k = {
         action = function()
             state.offset = math.max(0, state.offset - 1)
@@ -321,5 +341,8 @@ actions = {
         desc = 'toggle debug'
     },
 }
+
+state.set_color("bg", { type = "8bit", r = 0, g = 0, b = 0 })
+state.set_color("fg", { type = "bit", r = 1, g = 1, b = 1 })
 
 return M
