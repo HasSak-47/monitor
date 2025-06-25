@@ -117,6 +117,9 @@ int main(int argc, char* argv[]) {
     state.set_data(
         "show_kernel", lua::Value::boolean(true));
     state.set_data("sorting", lua::Value::string("memory"));
+    state.set_data("reload", lua::Value::boolean(false));
+    state.set_data("debug", lua::Value::boolean(false));
+    state.set_data("help", lua::Value::boolean(false));
 
     float fps    = 0;
     float tdelta = 0;
@@ -130,6 +133,11 @@ int main(int argc, char* argv[]) {
         auto t_start = high_resolution_clock::now();
         reset_cursor();
         win.resize();
+        if (state.get_data("reload").as_boolean() == true) {
+            widget = state.from_file("init.lua");
+            state.set_data(
+                "reload", lua::Value::boolean(false));
+        }
 
         if (read(STDIN_FILENO, &cbuf, 1) > 0) {
             state.press(cbuf);

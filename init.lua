@@ -183,13 +183,13 @@ local M_type = widget:extend {
             render = function(_, buffer)
                 local x, y = buffer:get_size()
                 local lines = {
-                    string.format("fps:    %3.f", state.fps or 0),
-                    string.format("tick:   %3.f", state.tick or 0),
-                    string.format("tdelta: %3.f", state.tdelta or 0),
-                    string.format("offset: %d", state.offset or 0),
-                    string.format("process_total: %d", state.process_total or 0),
-                    string.format("keys: %s", last_keys),
-                    "show kernel: " .. tostring(state.show_kernel),
+                    string.format(" fps:    %3.f", state.fps or 0),
+                    string.format(" tick:   %3.f", state.tick or 0),
+                    string.format(" tdelta: %3.f", state.tdelta or 0),
+                    string.format(" offset: %d", state.offset or 0),
+                    string.format(" process_total: %d", state.process_total or 0),
+                    string.format(" keys: %s", last_keys),
+                    " show kernel: " .. tostring(state.show_kernel),
                 }
                 for i, line in ipairs(lines) do
                     if i > y then break end
@@ -234,13 +234,17 @@ local M_type = widget:extend {
         end
 
         -- debug
-        if self.debug then
-            self.debug_box:render(buffer:get_sub(x // 2, y // 2, 20, 10))
+        if state.debug then
+            local w = 20
+            local h = 10
+            self.debug_box:render(buffer:get_sub((x - w // 2) // 2, (y - h // 2) // 2, w, h))
         end
 
         -- help
-        if self.help then
-            self.help_box:render(buffer:get_sub(x // 2, y // 2, 40, 10))
+        if state.help then
+            local w = 40
+            local h = 20
+            self.help_box:render(buffer:get_sub((x - w // 2) // 2, (y - h // 2) // 2, w, h))
         end
     end,
 
@@ -305,14 +309,14 @@ actions = {
 
     h = {
         action = function()
-            M.help = not M.help
+            state.help = not state.help
         end,
         desc = 'toggle help'
     },
 
     d = {
         action = function()
-            M.debug = not M.debug
+            state.debug = not state.debug
         end,
         desc = 'toggle debug'
     },
