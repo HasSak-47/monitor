@@ -56,10 +56,11 @@ local Bar = widget:extend({
 
 ---@class Widget
 local Box = widget:extend({
-    new = function(self, inner)
+    new = function(self, inner, name)
         local t = self.super.new(self)
         setmetatable(t, self)
 
+        t.name = name
         t._type = "Box"
         t.__index = self
         t.inner = inner
@@ -76,17 +77,20 @@ local Box = widget:extend({
             end
         end
         for i = 2, x - 1 do
-            buffer:set(i, 1, '-') -- Top
-            buffer:set(i, y, '-') -- Bottom
+            buffer:set(i, 1, '─') -- Top
+            buffer:set(i, y, '─') -- Bottom
         end
         for j = 2, y - 1 do
-            buffer:set(1, j, '|') -- Left
-            buffer:set(x, j, '|') -- Right
+            buffer:set(1, j, '│') -- Left
+            buffer:set(x, j, '│') -- Right
         end
-        buffer:set(1, 1, '+')
-        buffer:set(x, 1, '+')
-        buffer:set(1, y, '+')
-        buffer:set(x, y, '+')
+        buffer:set(1, 1, '╭')
+        buffer:set(1, y, '╰')
+        buffer:set(x, 1, '╮')
+        buffer:set(x, y, '╯')
+        if self.name then
+            buffer:get_sub(3, 1, string.len(self.name), 1):render(self.name)
+        end
         self.inner:render(buffer:get_sub(2, 2, x - 2, y - 2))
     end
 })
@@ -186,8 +190,9 @@ local M_type = widget:extend {
             { type = "bit", r = 1, g = 1, b = 0, },
         })
 
-        ---@class Widget
-        t.process = widget:new {
+        t.debug = false
+        t.help = false
+        t.process_box = Box:new(widget:new {
             render = function(_, buffer)
                 local x, y = buffer:get_size()
 
@@ -196,14 +201,13 @@ local M_type = widget:extend {
                 buffer:get_sub(7, 1, 10, 1):render('mem')
                 buffer:get_sub(18, 1, 12, 1):render('name')
                 buffer:get_sub(31, 1, x - 30, 1):render('cmd')
-                buffer:get_sub(x - 10, 1, 10, 1):render(sorts[sort_idx + 1])
+                buffer:get_sub(x - 20, 1, 20, 1):render('sorting by: ' .. sorts[sort_idx + 1])
 
                 for i = 1, y - 1, 1 do
-                    if i + 1 >= y then break end
+                    if i >= y then break end
 
                     local idx = state.offset + i
                     if idx > state.process_total then break end
-
 
                     buffer:get_sub(1, i + 1, 5, 1):render(ps[idx].pid)
                     buffer:get_sub(7, i + 1, 10, 1):render(string.format("%10s", format_mem(ps[idx].mem)))
@@ -211,10 +215,8 @@ local M_type = widget:extend {
                     buffer:get_sub(31, i + 1, x - 30, 1):render(ps[idx].cmd)
                 end
             end
-        }
 
-        t.debug = false
-        t.help = false
+        }, "proc")
         t.debug_box = Box:new(widget:new {
             render = function(_, buffer)
                 local x, y = buffer:get_size()
@@ -232,7 +234,7 @@ local M_type = widget:extend {
                     buffer:get_sub(1, i, x, 1):render(line)
                 end
             end
-        })
+        }, "debug")
         t.help_box = Box:new(widget:new {
             render = function(_, buffer)
                 local x, y = buffer:get_size()
@@ -244,7 +246,7 @@ local M_type = widget:extend {
                     i = i + 1
                 end
             end
-        })
+        }, "help")
         return t
     end,
 
@@ -254,20 +256,24 @@ local M_type = widget:extend {
         local sub = buffer:get_sub(1, 1, x, 1)
         self.memory:render(sub)
 
-        buffer:get_sub(1, 2, x, y - 1):render(self.process)
+        buffer:get_sub(1, 2, x, y - 1):render(self.process_box)
 
         -- debug
         if state.debug then
-            local w = 20
-            local h = 10
-            self.debug_box:render(buffer:get_sub((x - w // 2) // 2, (y - h // 2) // 2, w, h))
+            local w = 30
+            local h = 20
+            local xp = x // 2 - w // 2
+            local yp = y // 2 - h // 2
+            buffer:get_sub(xp, yp, w, h):render(self.debug_box)
         end
 
         -- help
         if state.help then
             local w = 40
             local h = 20
-            self.help_box:render(buffer:get_sub((x - w // 2) // 2, (y - h // 2) // 2, w, h))
+            local xp = x // 2 - w // 2
+            local yp = y // 2 - h // 2
+            buffer:get_sub(xp, yp, w, h):render(self.help_box)
         end
     end,
 
@@ -309,6 +315,7 @@ actions = {
     a = {
         action = function()
             state.show_kernel = not state.show_kernel
+            state.offset = 0
         end,
         desc = 'toggle show kernel'
     },

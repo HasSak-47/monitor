@@ -42,20 +42,15 @@ public:
     _proc_statm _statm;
 
     pid_t _pid;
-    std::ifstream _stat_file;
-    std::ifstream _statm_file;
-    std::ifstream _cmd_file;
+    // to be closed when the process ends
+    std::string _stat_path;
+    std::string _statm_path;
+    std::string _cmd_path;
     bool _functional = false;
 
     Process();
     Process(char* pid);
     Process(pid_t pid);
-
-    Process(const Process& other) = delete;
-    Process(Process&& other);
-
-    Process& operator=(const Process& other) = delete;
-    Process& operator=(Process&& other);
 
     bool update();
     bool is_kernel() const;
@@ -105,7 +100,7 @@ using Processes = std::unordered_map<size_t, Process>;
 
 class System {
 private:
-    Processes _process;
+    Processes _process = {};
 
 public:
     ProcStat stat;

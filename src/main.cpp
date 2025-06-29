@@ -92,6 +92,9 @@ void set_process_table(ly::render::lua::State& state) {
     Value::ArrayType array;
 
     for (size_t i = 0; i < procs.size(); ++i) {
+        // for some reason this exists :)
+        if (procs[i]->_stat.pid == 0)
+            continue;
         array.push_back(from_process(procs[i]));
     }
 
@@ -177,7 +180,6 @@ int main(int argc, char* argv[]) {
         if (read(STDIN_FILENO, &cbuf, 1) > 0) {
             state.press(cbuf);
         }
-
         state.set_data(
             "total_mem", lua::Value::integer(
                              (int64_t)sys::sys._max_mem));
@@ -197,9 +199,7 @@ int main(int argc, char* argv[]) {
 
         set_process_table(state);
 
-        if (tick % 10 == 0) {
-            widget.update();
-        }
+        widget.update();
         win.get_buf().render_widget(widget);
         win.render();
 
@@ -220,6 +220,7 @@ int main(int argc, char* argv[]) {
             duration_cast<milliseconds>(t_end - t_start);
         fps = 1000.0 / total_elapsed.count();
         tick++;
+
         state.set_data("tick",
             render::lua::Value::integer((int64_t)tick));
         state.set_data("tdelta",

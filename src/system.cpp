@@ -44,105 +44,65 @@ Process::Process() {}
 Process::Process(char* pid)
     : Process(static_cast<pid_t>(std::stoi(pid))) {}
 
-Process::Process(pid_t pid) {
-    std::string pid_str = std::to_string(pid);
-    this->_stat_file    = std::ifstream(
-        std::string("/proc/") + pid_str + "/stat");
-    this->_statm_file = std::ifstream(
-        std::string("/proc/") + pid_str + "/statm");
-
-    this->_cmd_file = std::ifstream(
-        std::string("/proc/") + pid_str + "/cmdline");
-
+Process::Process(pid_t pid) : _pid(pid) {
     this->update();
-}
-
-Process::Process(Process&& other) {
-    this->_pid        = other._pid;
-    this->_stat_file  = std::move(other._stat_file);
-    this->_statm_file = std::move(other._statm_file);
-    this->_cmd_file   = std::move(other._cmd_file);
-
-    this->update();
-}
-
-Process& Process::operator=(Process&& other) {
-    this->_pid        = other._pid;
-    this->_stat_file  = std::move(other._stat_file);
-    this->_statm_file = std::move(other._statm_file);
-    this->_cmd_file   = std::move(other._cmd_file);
-
-    this->update();
-
-    return *this;
 }
 
 bool Process::func() {
-    return this->_functional;
+    return _functional;
 }
 
 bool Process::is_kernel() const {
-    return !this->_cmd.empty() &&
-           this->_cmd.front() == '[' &&
-           this->_cmd.back() == ']';
+    return !_cmd.empty() && _cmd.front() == '[' &&
+           _cmd.back() == ']';
 }
 
 // TODO: rework this so constructor gets the static data
 // and update the dynamic data
 bool Process::update() {
-    if (!_stat_file.is_open() || !_statm_file.is_open())
+    std::string base = "/proc/" + std::to_string(_pid);
+
+    std::ifstream stat_file(base + "/stat");
+    std::ifstream statm_file(base + "/statm");
+    std::ifstream cmd_file(base + "/cmdline");
+
+    if (!stat_file || !statm_file) {
+        _functional = false;
         return false;
-
-    if (_stat_file.tellg() != 0)
-        _stat_file.seekg(0);
-    if (_statm_file.tellg() != 0)
-        _statm_file.seekg(0);
-
-    _stat_file >> this->_stat.pid;
-    // i lov u c++ never change
-    this->_stat.name = "";
-    while (!_stat_file.eof() && !_stat_file.bad()) {
-        char buf = _stat_file.get();
-        if (buf == -1)
-            return false;
-        if (buf == ')')
-            break;
-        if (buf != '(')
-            this->_stat.name += buf;
     }
 
-    _stat_file >> this->_stat.state >>
-        this->_stat.parent_pid >> this->_stat.group_id;
+    _functional = true;
 
-    _statm_file >> this->_statm.size >>
-        this->_statm.resident >> this->_statm.shared >>
-        this->_statm.text >> this->_statm.lib >>
-        this->_statm.data >> this->_statm.dt;
+    stat_file >> _stat.pid;
+    _stat.name.clear();
+    char c;
+    while (stat_file.get(c)) {
+        if (c == ')')
+            break;
+        if (c != '(')
+            _stat.name += c;
+    }
 
-    if (_cmd_file.is_open()) {
-        _cmd_file.clear();
-        _cmd_file.seekg(0);
-        if (_cmd_file.fail())
-            std::cerr << "Seek failed!" << std::endl;
+    stat_file >> _stat.state >> _stat.parent_pid >>
+        _stat.group_id;
 
-        this->_cmd = "";
+    statm_file >> _statm.size >> _statm.resident >>
+        _statm.shared >> _statm.text >> _statm.lib >>
+        _statm.data >> _statm.dt;
 
-        char c;
-
-        while (_cmd_file.get(c)) {
+    _cmd.clear();
+    if (cmd_file) {
+        while (cmd_file.get(c))
             _cmd += (c == '\0') ? ' ' : c;
-        }
 
-        if (!_cmd.empty() && _cmd.back() == ' ') {
+        if (!_cmd.empty() && _cmd.back() == ' ')
             _cmd.pop_back();
-        }
 
-        if (_cmd.empty()) {
+        if (_cmd.empty())
             _cmd = "[" + _stat.name + "]";
-        }
     }
     else {
-        this->_cmd = "cfb[" + this->_stat.name + "]";
+        _cmd = "[" + _stat.name + "]";
     }
 
     return true;
@@ -185,6 +145,9 @@ void ProcStat::update() {
     size_t cpu_count = 0;
     // hacky to do it
     DIR* dir = opendir("/dev/cpu");
+    if (dir == NULL) {
+        return;
+    }
     while (readdir(dir)) cpu_count++;
     closedir(dir);
 
